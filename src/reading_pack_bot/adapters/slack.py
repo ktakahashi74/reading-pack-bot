@@ -28,7 +28,7 @@ from ..models import IncomingMessage
 from ..service import BotService
 
 LOGGER = logging.getLogger(__name__)
-_MENTION_RE = re.compile(r"<@[A-Z0-9]+>")
+_MENTION_RE = re.compile(r"<@[A-Z0-9]+(?:\|[^>\r\n]*)?>")
 _SPECIAL_MENTION_RE = re.compile(
     r"<!(?:channel|here|everyone)(?:\|[^>\r\n]*)?>"
     r"|<!subteam\^[^>\r\n]+>"
@@ -37,11 +37,34 @@ _SPECIAL_MENTION_RE = re.compile(
 _GENERATION_STATUS = "が回答を作成しています…"
 
 
-def strip_bot_mention(text: str, bot_user_id: str | None) -> str:
+def _bot_mention_pattern(bot_user_id: str | None) -> re.Pattern[str]:
     if bot_user_id:
-        pattern = re.compile(rf"<@{re.escape(bot_user_id)}>")
-        return pattern.sub("", text, count=1).strip()
-    return _MENTION_RE.sub("", text, count=1).strip()
+        return re.compile(rf"<@{re.escape(bot_user_id)}(?:\|[^>\r\n]*)?>")
+    return _MENTION_RE
+
+
+def strip_bot_mention(text: str, bot_user_id: str | None) -> str:
+    return _bot_mention_pattern(bot_user_id).sub("", text, count=1).strip()
+
+
+def split_bot_invocation(text: str, bot_user_id: str | None) -> tuple[str, str]:
+    """Return same-message context and the explicit request around one mention.
+
+    Text after the mention is the explicit request. If it is empty, text before
+    the mention becomes the request so trailing mentions continue to work. A
+    bare mention is the help command.
+    """
+
+    match = _bot_mention_pattern(bot_user_id).search(text)
+    if match is None:
+        return "", text.strip()
+    before = text[: match.start()].strip()
+    after = text[match.end() :].strip()
+    if after:
+        return before, after
+    if before:
+        return "", before
+    return "", "help"
 
 
 def split_message(text: str, limit: int) -> tuple[str, ...]:
@@ -167,7 +190,9 @@ class SlackAdapter:
             LOGGER.info("slack_event_ignored reason=automated_message")
             return
         bot_user_id = str((context or {}).get("bot_user_id") or "") or None
-        question = strip_bot_mention(str(event.get("text") or ""), bot_user_id)
+        inline_context, question = split_bot_invocation(
+            str(event.get("text") or ""), bot_user_id
+        )
         message = IncomingMessage(
             event_id=event_id,
             platform="slack",
@@ -178,6 +203,7 @@ class SlackAdapter:
             text=question,
             triggered=True,
             automated=False,
+            inline_context=inline_context,
         )
         turn_key = (installation_id, channel_id, thread_id)
         job = _Job(

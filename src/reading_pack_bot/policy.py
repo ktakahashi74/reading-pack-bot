@@ -37,7 +37,10 @@ class MessagePolicy:
             return PolicyDecision(False, "missing_identity")
         if not message.text.strip():
             return PolicyDecision(False, "empty_question")
-        if len(message.text) > self.limits.max_question_characters:
+        if (
+            len(message.inline_context) + len(message.text)
+            > self.limits.max_question_characters
+        ):
             return PolicyDecision(False, "question_too_long")
         return PolicyDecision(True, "allowed")
 

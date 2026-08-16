@@ -78,13 +78,14 @@ class SlackEndToEndTests(unittest.TestCase):
         workspace: str = "T1",
         channel: str = "C1",
         thread: str | None = "90.0",
+        raw: bool = False,
     ) -> list[dict[str, object]]:
         self.sequence += 1
         timestamp = f"10{self.sequence}.1"
         event = {
             "channel": channel,
             "user": "U1",
-            "text": f"<@UBOT> {text}",
+            "text": text if raw else f"<@UBOT> {text}",
             "ts": timestamp,
         }
         if thread is not None:
@@ -124,6 +125,22 @@ class SlackEndToEndTests(unittest.TestCase):
         self.assertNotIn("mrkdwn", posts[0])
         self.assertEqual(self.provider.requests, [])
 
+    def test_help_after_same_message_context_does_not_call_model(self) -> None:
+        posts = self.send(
+            "試用チャンネルを用意しました。\nOSSで公開します。\n<@UBOT> help",
+            event_id="E-context-help",
+            raw=True,
+        )
+        self.assertEqual(len(posts), 1)
+        self.assertIn("**使い方**", posts[0]["markdown_text"])
+        self.assertEqual(self.provider.requests, [])
+
+    def test_bare_mention_displays_help_without_model_call(self) -> None:
+        posts = self.send("<@UBOT>", event_id="E-bare", raw=True)
+        self.assertEqual(len(posts), 1)
+        self.assertIn("**使い方**", posts[0]["markdown_text"])
+        self.assertEqual(self.provider.requests, [])
+
     def test_status_reaches_slack_without_model_call(self) -> None:
         posts = self.send("status", event_id="E-status")
         self.assertEqual(len(posts), 1)
@@ -137,6 +154,34 @@ class SlackEndToEndTests(unittest.TestCase):
         self.assertEqual(posts[0]["markdown_text"], "## Answer\n\n**bold** [x] [x]")
         self.assertEqual(len(self.provider.requests), 1)
         self.assertEqual(self.provider.requests[0].current_question, "question")
+
+    def test_same_message_context_and_request_are_separated_for_generation(self) -> None:
+        posts = self.send(
+            "前提となる文章です。\n<@UBOT> 本書と比較してください。",
+            event_id="E-inline-context",
+            raw=True,
+        )
+        self.assertEqual(len(posts), 1)
+        self.assertEqual(len(self.provider.requests), 1)
+        self.assertEqual(
+            self.provider.requests[0].current_question,
+            "[Context before the bot mention in the same message]\n"
+            "前提となる文章です。\n\n"
+            "[Request after the bot mention]\n"
+            "本書と比較してください。",
+        )
+
+    def test_help_with_additional_request_is_a_normal_question(self) -> None:
+        self.send(
+            "<@UBOT> help\n第3章も説明してください。",
+            event_id="E-help-question",
+            raw=True,
+        )
+        self.assertEqual(len(self.provider.requests), 1)
+        self.assertEqual(
+            self.provider.requests[0].current_question,
+            "help\n第3章も説明してください。",
+        )
 
     def test_generation_status_appears_only_for_unique_model_requests(self) -> None:
         self.adapter.config = replace(

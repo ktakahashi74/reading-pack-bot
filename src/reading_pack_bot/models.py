@@ -49,6 +49,7 @@ class IncomingMessage:
     text: str
     triggered: bool = True
     automated: bool = False
+    inline_context: str = ""
 
     def conversation_key(self, pack_sha256: str) -> ConversationKey:
         return ConversationKey(
