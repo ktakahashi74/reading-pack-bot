@@ -1,0 +1,44 @@
+name: Feature request
+description: Propose a focused improvement to Reading Pack Bot
+title: "[Feature] "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe the user need and the smallest useful change. Keep real Reading
+        Packs, private conversations, credentials, and deployment identifiers out
+        of the issue.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What is difficult or impossible today, and for whom?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+      description: Explain the behavior rather than prescribing an implementation when possible.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: textarea
+    id: impact
+    attributes:
+      label: Security and operational impact
+      description: Note new permissions, external services, stored data, or deployment changes.
+    validations:
+      required: true
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety check
+      options:
+        - label: This issue contains no credentials, private content, transcripts, or deployment identifiers.
+          required: true

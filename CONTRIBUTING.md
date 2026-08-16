@@ -3,6 +3,8 @@
 Focused bug reports, tests, documentation corrections, and small patches are
 welcome.
 
+Participation is governed by the [Code of Conduct](CODE_OF_CONDUCT.md).
+
 Do not put credentials, workspace or channel identifiers, private logs,
 transcripts, manuscripts, or real Reading Packs in an issue or pull request.
 Report a suspected vulnerability through the private process described in

@@ -57,7 +57,8 @@ reading-pack-bot ask --config config.local.toml
 
 ## 開発
 
-開発環境と公開データの規則は[CONTRIBUTING.md](CONTRIBUTING.md)を参照してください。
+開発環境と公開データの規則は[CONTRIBUTING.md](CONTRIBUTING.md)、参加時の行動規範は
+[Code of Conduct](CODE_OF_CONDUCT.md)を参照してください。
 
 ```sh
 sh scripts/test-suite.sh

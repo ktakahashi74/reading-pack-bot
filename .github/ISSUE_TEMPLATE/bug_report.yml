@@ -1,0 +1,67 @@
+name: Bug report
+description: Report a reproducible problem in Reading Pack Bot
+title: "[Bug] "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting a problem. Do not include credentials, private
+        Reading Packs, transcripts, platform identifiers, or unsanitized logs.
+        Report security issues through the private link below instead.
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Affected surface
+      options:
+        - Core or command line
+        - Slack adapter
+        - Discord adapter
+        - Anthropic provider
+        - OpenAI-compatible provider
+        - Container or Quadlet deployment
+        - Documentation
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      description: For example, 0.4.0 or a commit SHA.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Use the synthetic fixture or redacted placeholders where possible.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Sanitized diagnostics
+      description: Include only relevant output after removing secrets and private data.
+      render: shell
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety check
+      options:
+        - label: I removed credentials, private content, transcripts, and deployment identifiers.
+          required: true
+        - label: This is not a security vulnerability requiring private reporting.
+          required: true

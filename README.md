@@ -62,7 +62,7 @@ before using private material. The system boundaries are documented in
 ## Development
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and public-content
-rules.
+rules. Participation is governed by the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ```sh
 sh scripts/test-suite.sh
