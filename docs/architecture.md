@@ -58,8 +58,9 @@ new mention.
 ## Provider boundary
 
 The Anthropic adapter sends the Pack as the first citable plain-text document
-with an ephemeral prompt-cache marker. Retained visible turns and the current
-question follow it. Claude Sonnet 5 uses adaptive thinking at medium effort;
+with a one-hour prompt-cache marker. Retained visible turns and the current
+question follow it; the latest retained turn keeps the default five-minute
+cache lifetime. Claude Sonnet 5 uses adaptive thinking at medium effort;
 thinking blocks are not rendered.
 
 With hosted web disabled, the OpenAI-compatible adapter places the verified
