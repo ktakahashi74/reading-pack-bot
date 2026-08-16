@@ -103,7 +103,9 @@ class AnthropicProviderTests(unittest.TestCase):
         self.assertEqual(document["type"], "document")
         self.assertEqual(document["source"]["data"], self.pack.raw_markdown)
         self.assertEqual(document["citations"], {"enabled": True})
-        self.assertEqual(document["cache_control"], {"type": "ephemeral"})
+        self.assertEqual(
+            document["cache_control"], {"type": "ephemeral", "ttl": "1h"}
+        )
         self.assertIn(self.pack.sha256, document["context"])
         companion = messages[0]["content"][1]["text"]
         self.assertEqual(

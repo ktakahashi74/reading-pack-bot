@@ -126,7 +126,7 @@ def _pack_message(request: GenerationRequest) -> dict[str, Any]:
                 "title": f"Reading Pack {version}",
                 "context": f"Operator-verified sha256={request.pack.sha256}",
                 "citations": {"enabled": True},
-                "cache_control": {"type": "ephemeral"},
+                "cache_control": {"type": "ephemeral", "ttl": "1h"},
             },
             {
                 "type": "text",
