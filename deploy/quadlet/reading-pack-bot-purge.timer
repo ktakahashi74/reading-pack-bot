@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily Reading Pack Bot state purge (rootless Podman)
+
+[Timer]
+OnCalendar=daily
+RandomizedDelaySec=30m
+Persistent=true
+Unit=reading-pack-bot-purge.service
+
+[Install]
+WantedBy=timers.target

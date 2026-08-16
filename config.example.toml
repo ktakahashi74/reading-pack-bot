@@ -1,0 +1,68 @@
+schema_version = 3
+
+[runtime]
+stage = "local"
+kill_switch = true
+log_level = "INFO"
+
+[pack]
+path = "tests/fixtures/clockwork-garden-reading-pack.en.md"
+max_bytes = 524288
+# Optional integrity pin. When omitted, the bot computes and reports the hash.
+# sha256 = "d16280ea15f1e516be157b31547bf21d8991444e78a1e94cd12b83f14ac75c4d"
+
+[provider]
+# Live choices are "openai-compatible" or "anthropic". For the compatible
+# adapter, model IDs are provider-defined; optional examples:
+# base_url = "https://models.example.org/v1"
+# api_key_env = "MODEL_API_KEY"
+# Omitting both uses OpenAI's base URL and OPENAI_API_KEY. Plain HTTP or an
+# empty api_key_env is accepted only for a local-stage loopback endpoint.
+# Anthropic requires a pinned Claude model ID such as "claude-sonnet-5".
+kind = "fake"
+model = ""
+timeout_seconds = 60.0
+max_retries = 1
+max_output_tokens = 4096
+
+[web]
+# Provider-hosted web access. The model decides when retrieval helps, and the
+# provider enforces URL access policy. Anthropic uses separate search/fetch
+# bounds. OpenAI-compatible providers use Responses API web_search and the sum
+# of max_search_uses and max_fetch_uses as max_tool_calls; the endpoint and
+# model must support that surface.
+enabled = false
+max_search_uses = 8
+max_fetch_uses = 5
+max_pause_continuations = 1
+max_content_tokens = 20000
+
+[store]
+kind = "sqlite"
+path = "reading-pack-bot.sqlite3"
+history_turns = 8
+# Set to 0 to retain conversations until reset or manual deletion.
+conversation_ttl_seconds = 604800
+event_ttl_seconds = 86400
+
+[policy]
+max_question_characters = 4000
+max_answer_characters = 3500
+requests_per_window = 10
+request_window_seconds = 60
+daily_requests = 500
+
+[adapter]
+kind = "disabled"
+allowed_installations = []
+# "allowlist" keeps an explicit channel list; "joined" accepts app_mention
+# events delivered from channels where the app has been invited.
+channel_policy = "allowlist"
+allowed_channels = []
+message_chunk_characters = 3500
+queue_size = 64
+# Start at 1. Slack permits 1..4; separate threads may then run concurrently.
+max_concurrent_generations = 1
+post_timeout_seconds = 10
+# Optional Slack assistant loading state; enable only after a staging check.
+show_generation_status = false

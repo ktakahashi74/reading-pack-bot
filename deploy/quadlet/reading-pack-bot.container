@@ -1,0 +1,37 @@
+[Unit]
+Description=Reading Pack Bot (rootless Podman)
+Documentation=https://github.com/ktakahashi74/reading-pack-bot
+
+[Container]
+Image=localhost/reading-pack-bot:0.4.0
+Pull=never
+ContainerName=reading-pack-bot
+User=0
+EnvironmentFile=%h/.config/reading-pack-bot/env
+Volume=%h/.config/reading-pack-bot/env:/etc/reading-pack-bot/env:ro
+Volume=%h/.config/reading-pack-bot/config.toml:/etc/reading-pack-bot/config.toml:ro
+Volume=%h/.config/reading-pack-bot/packs:/etc/reading-pack-bot/packs:ro
+Volume=%h/.local/state/reading-pack-bot:/var/lib/reading-pack-bot
+ReadOnly=true
+ReadOnlyTmpfs=true
+RunInit=true
+DropCapability=all
+NoNewPrivileges=true
+PidsLimit=64
+Ulimit=nofile=1024:1024
+ShmSize=16m
+LogDriver=journald
+Exec=run --config /etc/reading-pack-bot/config.toml
+
+[Service]
+Restart=on-failure
+RestartSec=5s
+RestartPreventExitStatus=2
+TimeoutStartSec=30s
+TimeoutStopSec=90s
+UMask=0077
+MemoryMax=512M
+TasksMax=64
+
+[Install]
+WantedBy=default.target

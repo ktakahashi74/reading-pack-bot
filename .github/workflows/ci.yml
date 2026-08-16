@@ -1,0 +1,93 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  offline-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Compile
+        run: PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python -m compileall -q src tests
+      - name: Test offline
+        run: PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python -m unittest discover -s tests -v
+      - name: Install pinned build toolchain
+        run: python -m pip install --require-hashes --requirement requirements-build.lock
+      - name: Build core wheel
+        run: |
+          test ! -e build
+          python -m pip wheel --no-deps --no-build-isolation . -w dist
+          sh scripts/verify-wheel.sh dist/reading_pack_bot-0.4.0-py3-none-any.whl
+      - name: Audit public boundary
+        run: sh scripts/audit-public.sh
+
+  optional-sdk-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Install optional SDKs
+        run: |
+          python -m pip install --require-hashes --requirement requirements-build.lock
+          python -m pip install --require-hashes --requirement requirements-live-linux-amd64.lock
+          python -m pip install --no-build-isolation --no-deps -e .
+      - name: Import and contract smoke
+        run: |
+          python - <<'PY'
+          import inspect
+
+          from anthropic import Anthropic
+          from openai import OpenAI
+          from slack_bolt import App
+          from slack_bolt.adapter.socket_mode import SocketModeHandler
+          from slack_sdk import WebClient
+
+          anthropic = Anthropic(api_key="test-key")
+          openai = OpenAI(api_key="test-key")
+          anthropic_parameters = set(
+              inspect.signature(anthropic.messages.create).parameters
+          )
+          chat_parameters = set(
+              inspect.signature(openai.chat.completions.create).parameters
+          )
+          responses_parameters = set(
+              inspect.signature(openai.responses.create).parameters
+          )
+
+          assert {"model", "system", "messages", "max_tokens"} <= anthropic_parameters
+          assert {"model", "messages", "max_tokens"} <= chat_parameters
+          assert {
+              "model",
+              "instructions",
+              "input",
+              "max_output_tokens",
+              "max_tool_calls",
+              "tools",
+              "tool_choice",
+              "store",
+          } <= responses_parameters
+          assert "client" in inspect.signature(App).parameters
+          assert {"timeout", "retry_handlers"} <= set(
+              inspect.signature(WebClient).parameters
+          )
+          assert callable(getattr(WebClient, "assistant_threads_setStatus", None))
+          assert callable(getattr(SocketModeHandler, "connect", None))
+          assert callable(getattr(SocketModeHandler, "close", None))
+          PY
+          PYTHONDONTWRITEBYTECODE=1 python -m unittest tests.test_anthropic_provider tests.test_openai_provider tests.test_slack_adapter -v

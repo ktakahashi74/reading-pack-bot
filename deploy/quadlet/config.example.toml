@@ -1,0 +1,67 @@
+schema_version = 3
+
+[runtime]
+stage = "staging"
+kill_switch = true
+log_level = "INFO"
+
+[pack]
+path = "/etc/reading-pack-bot/packs/reading-pack.md"
+max_bytes = 524288
+# Optional integrity pin. The bot computes and reports the hash either way.
+# sha256 = "replace-with-the-approved-pack-sha256"
+
+[provider]
+# Keep fake until the reviewed live provider, endpoint, model, and secrets are
+# staged. Use kind="openai-compatible" for a reviewed HTTPS endpoint, or
+# kind="anthropic" for the native Anthropic adapter.
+# OpenAI-compatible optional fields:
+# base_url = "https://models.example.org/v1"
+# api_key_env = "MODEL_API_KEY"
+kind = "fake"
+model = ""
+timeout_seconds = 60.0
+max_retries = 0
+max_output_tokens = 4096
+
+[web]
+# Provider-hosted web access. Anthropic uses separate search/fetch bounds.
+# OpenAI-compatible endpoints must support Responses API web_search; its total
+# tool-call bound is max_search_uses + max_fetch_uses. URL access policy remains
+# the provider's responsibility.
+enabled = false
+max_search_uses = 8
+max_fetch_uses = 5
+max_pause_continuations = 1
+max_content_tokens = 20000
+
+[store]
+kind = "sqlite"
+path = "/var/lib/reading-pack-bot/state.sqlite3"
+history_turns = 8
+# Set to 0 to retain conversations until reset or manual deletion.
+conversation_ttl_seconds = 604800
+event_ttl_seconds = 86400
+
+[policy]
+max_question_characters = 4000
+max_answer_characters = 3500
+requests_per_window = 10
+request_window_seconds = 60
+daily_requests = 500
+
+[adapter]
+kind = "disabled"
+allowed_installations = []
+# Use "joined" with allowed_channels=[] only after the workspace-wide
+# channel-opt-in rollout has been approved.
+channel_policy = "allowlist"
+allowed_channels = []
+message_chunk_characters = 3500
+# Non-local Slack deployments use one bounded waiting slot.
+queue_size = 1
+# Keep 1 for the initial rollout; Slack accepts a bounded value from 1 to 4.
+max_concurrent_generations = 1
+post_timeout_seconds = 10
+# Keep false until the Slack loading state is checked in a test channel.
+show_generation_status = false

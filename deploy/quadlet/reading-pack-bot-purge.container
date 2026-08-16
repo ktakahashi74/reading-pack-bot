@@ -1,0 +1,31 @@
+[Unit]
+Description=Purge expired Reading Pack Bot state (rootless Podman)
+Documentation=https://github.com/ktakahashi74/reading-pack-bot
+
+[Container]
+Image=localhost/reading-pack-bot:0.4.0
+Pull=never
+ContainerName=reading-pack-bot-purge
+User=0
+Network=none
+Volume=%h/.config/reading-pack-bot/config.toml:/etc/reading-pack-bot/config.toml:ro
+Volume=%h/.local/state/reading-pack-bot:/var/lib/reading-pack-bot
+ReadOnly=true
+ReadOnlyTmpfs=true
+DropCapability=all
+NoNewPrivileges=true
+PidsLimit=32
+Ulimit=nofile=256:256
+ShmSize=16m
+LogDriver=journald
+Exec=purge --config /etc/reading-pack-bot/config.toml
+
+[Service]
+Type=oneshot
+TimeoutStartSec=30s
+TimeoutStopSec=30s
+UMask=0077
+MemoryMax=256M
+# Podman and runc create host-side Go threads before the container's own
+# PidsLimit applies. Keep enough headroom for the rootless runtime.
+TasksMax=64

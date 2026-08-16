@@ -1,0 +1,42 @@
+[build-system]
+requires = ["packaging==26.3", "setuptools==83.0.0", "wheel==0.46.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "reading-pack-bot"
+version = "0.4.0"
+description = "Serve verified Reading Pack artifacts as Conversational Editions"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [{name = "Koichi Takahashi"}]
+dependencies = []
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+]
+
+[project.optional-dependencies]
+openai = ["openai==3.0.0"]
+anthropic = ["anthropic==0.120.2"]
+slack = ["slack-bolt==1.30.0"]
+all = ["anthropic==0.120.2", "openai==3.0.0", "slack-bolt==1.30.0"]
+
+[project.scripts]
+reading-pack-bot = "reading_pack_bot.cli:main"
+
+[project.urls]
+Documentation = "https://github.com/ktakahashi74/reading-pack-bot#readme"
+Source = "https://github.com/ktakahashi74/reading-pack-bot"
+Issues = "https://github.com/ktakahashi74/reading-pack-bot/issues"
+Security = "https://github.com/ktakahashi74/reading-pack-bot/security/policy"
+
+[tool.setuptools]
+license-files = ["LICENSE", "LICENSES/CC-BY-4.0.txt", "LICENSES/README.md"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
