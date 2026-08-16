@@ -488,8 +488,8 @@ def load_config(path: str | Path) -> AppConfig:
         "[adapter]",
     )
     adapter_kind = _string(adapter_raw, "kind")
-    if adapter_kind not in {"disabled", "slack"}:
-        raise ConfigurationError("adapter.kind must be disabled or slack")
+    if adapter_kind not in {"disabled", "slack", "discord"}:
+        raise ConfigurationError("adapter.kind must be disabled, slack, or discord")
     adapter = AdapterConfig(
         kind=adapter_kind,
         allowed_installations=_strings(adapter_raw, "allowed_installations"),
@@ -513,6 +513,8 @@ def load_config(path: str | Path) -> AppConfig:
         raise ConfigurationError("adapter.channel_policy must be allowlist or joined")
     if adapter.kind == "slack" and not adapter.allowed_installations:
         raise ConfigurationError("Slack requires a non-empty workspace allowlist")
+    if adapter.kind == "discord" and not adapter.allowed_installations:
+        raise ConfigurationError("Discord requires a non-empty server allowlist")
     if (
         adapter.kind == "slack"
         and adapter.channel_policy == "allowlist"
@@ -529,40 +531,66 @@ def load_config(path: str | Path) -> AppConfig:
         raise ConfigurationError(
             "Slack channel_policy=joined requires adapter.allowed_channels=[]"
         )
-    if adapter.max_concurrent_generations != 1 and adapter.kind != "slack":
+    if adapter.kind == "discord" and adapter.channel_policy != "allowlist":
+        raise ConfigurationError("Discord requires adapter.channel_policy=allowlist")
+    if adapter.kind == "discord" and not adapter.allowed_channels:
+        raise ConfigurationError("Discord requires a non-empty channel allowlist")
+    if adapter.kind == "discord" and adapter.message_chunk_characters > 2000:
         raise ConfigurationError(
-            "adapter.max_concurrent_generations requires adapter.kind=slack"
+            "Discord limits adapter.message_chunk_characters to 2000"
         )
-    if adapter.show_generation_status and adapter.kind != "slack":
+    if (
+        adapter.max_concurrent_generations != 1
+        and adapter.kind not in {"slack", "discord"}
+    ):
         raise ConfigurationError(
-            "adapter.show_generation_status requires adapter.kind=slack"
+            "adapter.max_concurrent_generations requires adapter.kind=slack or discord"
         )
-    if runtime.stage != "local" and adapter.kind == "slack" and store.kind != "sqlite":
-        raise ConfigurationError("non-local Slack deployments require the sqlite store")
-    if runtime.stage != "local" and adapter.kind == "slack":
+    if (
+        adapter.show_generation_status
+        and adapter.kind not in {"slack", "discord"}
+    ):
+        raise ConfigurationError(
+            "adapter.show_generation_status requires adapter.kind=slack or discord"
+        )
+    platform_adapter = adapter.kind in {"slack", "discord"}
+    if runtime.stage != "local" and platform_adapter and store.kind != "sqlite":
+        raise ConfigurationError(
+            f"non-local {adapter.kind.title()} deployments require the sqlite store"
+        )
+    if runtime.stage != "local" and platform_adapter:
+        platform_name = adapter.kind.title()
         if provider.max_retries != 0:
-            raise ConfigurationError("non-local Slack requires provider.max_retries=0")
+            raise ConfigurationError(
+                f"non-local {platform_name} requires provider.max_retries=0"
+            )
         if adapter.queue_size != 1:
-            raise ConfigurationError("non-local Slack requires adapter.queue_size=1")
+            raise ConfigurationError(
+                f"non-local {platform_name} requires adapter.queue_size=1"
+            )
         if adapter.post_timeout_seconds > 10:
-            raise ConfigurationError("non-local Slack limits adapter.post_timeout_seconds to 10")
+            raise ConfigurationError(
+                f"non-local {platform_name} limits adapter.post_timeout_seconds to 10"
+            )
         if policy.max_answer_characters > adapter.message_chunk_characters:
-            raise ConfigurationError("non-local Slack requires answers to fit one platform message")
+            raise ConfigurationError(
+                f"non-local {platform_name} requires answers to fit one platform message"
+            )
         provider_calls = 1 + (
             web.max_pause_continuations
             if web.enabled and provider.kind == "anthropic"
             else 0
         )
-        slack_calls = 1 + int(adapter.show_generation_status)
+        platform_calls = 1 + int(adapter.show_generation_status)
         worst_case_seconds = (
             provider_calls * provider.timeout_seconds
-            + slack_calls * adapter.post_timeout_seconds
+            + platform_calls * adapter.post_timeout_seconds
         )
         if worst_case_seconds > (
             SERVICE_TIMEOUT_STOP_SECONDS - SERVICE_SHUTDOWN_MARGIN_SECONDS
         ):
             raise ConfigurationError(
-                "non-local Slack status, provider, retrieval, continuation, and post "
+                f"non-local {platform_name} status, provider, retrieval, continuation, and post "
                 f"timeouts must fit TimeoutStopSec={SERVICE_TIMEOUT_STOP_SECONDS}"
             )
     if runtime.stage == "production" and provider.kind not in {"openai-compatible", "anthropic"}:

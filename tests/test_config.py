@@ -359,6 +359,59 @@ class ConfigTests(unittest.TestCase):
         with self.assertRaisesRegex(ConfigurationError, "workspace allowlist"):
             self.load(config_text(workspaces="", channels=""))
 
+    def test_valid_local_discord_configuration(self):
+        config = self.load(
+            config_text(
+                adapter="discord",
+                workspaces='"G1"',
+                channels='"C1"',
+                show_generation_status=True,
+                max_concurrent_generations=4,
+            )
+        )
+        self.assertEqual(config.adapter.kind, "discord")
+        self.assertEqual(config.adapter.allowed_installations, ("G1",))
+        self.assertTrue(config.adapter.show_generation_status)
+        self.assertEqual(config.adapter.max_concurrent_generations, 4)
+
+    def test_discord_requires_server_and_channel_allowlists(self):
+        with self.assertRaisesRegex(ConfigurationError, "server allowlist"):
+            self.load(
+                config_text(
+                    adapter="discord",
+                    workspaces="",
+                    channels='"C1"',
+                )
+            )
+        with self.assertRaisesRegex(ConfigurationError, "channel allowlist"):
+            self.load(
+                config_text(
+                    adapter="discord",
+                    workspaces='"G1"',
+                    channels="",
+                )
+            )
+
+    def test_discord_rejects_joined_policy_and_chunks_over_2000(self):
+        with self.assertRaisesRegex(ConfigurationError, "channel_policy=allowlist"):
+            self.load(
+                config_text(
+                    adapter="discord",
+                    workspaces='"G1"',
+                    channel_policy="joined",
+                    channels="",
+                )
+            )
+        with self.assertRaisesRegex(ConfigurationError, "to 2000"):
+            self.load(
+                config_text(
+                    adapter="discord",
+                    workspaces='"G1"',
+                    channels='"C1"',
+                    message_chunk_characters=2001,
+                )
+            )
+
     def test_channel_allowlist_policy_requires_channels(self):
         with self.assertRaisesRegex(ConfigurationError, "channel allowlist"):
             self.load(config_text(channels=""))
@@ -382,8 +435,10 @@ class ConfigTests(unittest.TestCase):
         config = self.load(config_text(adapter="disabled", workspaces="", channels=""))
         self.assertEqual(config.adapter.kind, "disabled")
 
-    def test_generation_status_requires_slack_adapter(self):
-        with self.assertRaisesRegex(ConfigurationError, "requires adapter.kind=slack"):
+    def test_generation_status_requires_platform_adapter(self):
+        with self.assertRaisesRegex(
+            ConfigurationError, "requires adapter.kind=slack or discord"
+        ):
             self.load(
                 config_text(
                     adapter="disabled",
@@ -393,8 +448,10 @@ class ConfigTests(unittest.TestCase):
                 )
             )
 
-    def test_multiple_generation_workers_require_slack_adapter(self):
-        with self.assertRaisesRegex(ConfigurationError, "requires adapter.kind=slack"):
+    def test_multiple_generation_workers_require_platform_adapter(self):
+        with self.assertRaisesRegex(
+            ConfigurationError, "requires adapter.kind=slack or discord"
+        ):
             self.load(
                 config_text(
                     adapter="disabled",
@@ -544,6 +601,36 @@ class ConfigTests(unittest.TestCase):
         self.assertEqual(config.adapter.queue_size, 1)
         self.assertEqual(config.adapter.max_concurrent_generations, 1)
         self.assertEqual(config.adapter.post_timeout_seconds, 10)
+
+    def test_nonlocal_discord_bounded_shutdown_configuration(self):
+        config = self.load(
+            self.staging_slack(
+                adapter="discord",
+                workspaces='"G1"',
+                channels='"C1"',
+                message_chunk_characters=2000,
+                max_answer_characters=2000,
+                show_generation_status=True,
+            )
+        )
+        self.assertEqual(config.adapter.kind, "discord")
+        self.assertEqual(config.adapter.queue_size, 1)
+        self.assertTrue(config.adapter.show_generation_status)
+        with self.assertRaisesRegex(ConfigurationError, "TimeoutStopSec"):
+            self.load(
+                self.staging_slack(
+                    adapter="discord",
+                    workspaces='"G1"',
+                    channels='"C1"',
+                    message_chunk_characters=2000,
+                    max_answer_characters=2000,
+                    show_generation_status=True,
+                    provider="anthropic",
+                    model="claude-sonnet-5",
+                    web_enabled=True,
+                    provider_timeout=35.0,
+                )
+            )
 
     def test_nonlocal_slack_allows_bounded_parallel_workers(self):
         config = self.load(self.staging_slack(max_concurrent_generations=4))

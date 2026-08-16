@@ -124,6 +124,31 @@ class CliTests(unittest.TestCase):
         self.assertEqual(code, 2)
         self.assertIn("SDKError", stderr)
 
+    def test_discord_startup_error_is_clean_non_restart_exit(self):
+        path = self.config(
+            adapter="discord",
+            workspaces='"G1"',
+            channels='"C1"',
+        )
+        with (
+            patch.dict(
+                "os.environ",
+                {
+                    "READING_PACK_BOT_DISABLED": "",
+                    "DISCORD_BOT_TOKEN": "token-placeholder",
+                },
+            ),
+            patch(
+                "reading_pack_bot.cli.DiscordAdapter.run",
+                side_effect=ConfigurationError(
+                    "cannot connect Discord adapter (SDKError)"
+                ),
+            ),
+        ):
+            code, _stdout, stderr = self.call(["run", "--config", str(path)])
+        self.assertEqual(code, 2)
+        self.assertIn("SDKError", stderr)
+
     def test_disabled_openai_run_once_does_not_construct_provider(self):
         path = self.config(
             provider="openai",

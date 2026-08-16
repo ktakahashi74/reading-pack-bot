@@ -40,20 +40,20 @@ retrieved pages are untrusted input.
 ## Request flow
 
 ```text
-Slack app_mention
+Allowed platform mention
   -> route and message policy
   -> event claim and request limits
   -> retained visible thread turns
   -> verified Pack + turns + current question
   -> model provider
-  -> bounded reply in the originating Slack thread
+  -> bounded reply in the originating conversation
   -> history commit after successful delivery
 ```
 
-Disallowed routes, automated events, and duplicate events are silent. A Slack
-event is claimed before the paid provider call. If generation or delivery then
-fails, Slack's retry of that same event is ignored; the user can send a new
-mention.
+Disallowed routes, automated events, and duplicate events are silent. An event
+is claimed before the paid provider call. If generation or delivery then
+fails, a repeat delivery of that same event is ignored; the user can send a
+new mention.
 
 ## Provider boundary
 
@@ -112,6 +112,34 @@ contains one fixed application string and uses only the validated channel and
 thread route. Commands, rejected work, duplicates, rate-limited requests, and
 queue waits do not set it. Status failure does not stop the answer.
 
+## Discord boundary
+
+The Discord adapter uses the Gateway with the standard Guilds and Guild
+Messages intents. It leaves the privileged Message Content intent disabled and
+accepts only messages that explicitly mention the bot. Direct messages, bot
+and webhook messages, other servers, and unlisted routes are ignored.
+
+A mention of the managed permission role associated with the bot is not a bot
+user mention, even when Discord renders both with the same colored name. The
+adapter recognizes only a role whose Discord role tag names the current bot,
+posts a local correction, and makes no provider call. Unrelated role mentions
+remain silent.
+
+Every server and channel must match the configured allowlists. A thread under
+an allowed channel inherits that route, while the thread's own channel ID
+remains the conversation boundary. One to four workers may process different
+conversations; each conversation remains serialized through delivery and
+history commit.
+
+As on Slack, text before the exact bot mention becomes labeled inline context,
+and text after it is the explicit request. A trailing mention uses the text
+before it as the request, while a bare mention displays help.
+
+Replies disable all allowed mentions and suppress link embeds. The first chunk
+references the triggering message, and each chunk stays within Discord's 2000
+character limit. The optional generation indicator uses Discord's typing
+context and contains no message content.
+
 ## State and logs
 
 The conversation key includes platform, installation, channel, thread, and
@@ -127,14 +155,14 @@ error ID. They omit Pack text, questions, answers, credentials, and raw
 platform IDs.
 
 The provider still receives the complete Pack, current question, and retained
-visible turns. Local deletion does not remove Slack messages, provider records,
-host backups, or filesystem snapshots.
+visible turns. Local deletion does not remove platform messages, provider
+records, host backups, or filesystem snapshots.
 
 ## Process and host boundary
 
 Both the configuration kill switch and `READING_PACK_BOT_DISABLED` stop client
 construction. Non-local startup runs permission, dependency, secret, state,
-route, Pack, and timeout checks before opening Slack or model connections.
+route, Pack, and timeout checks before opening platform or model connections.
 
 The rootless Podman deployment uses a read-only image, drops all capabilities,
 publishes no port, and mounts only policy files and state. Container UID 0 maps
@@ -143,8 +171,8 @@ the image, configuration, environment file, Pack, and database.
 
 SIGTERM stops intake, discards queued work, and lets the active request finish
 within configured bounds. Configuration checks that one provider call,
-optional hosted-tool continuations and generation status, and the final Slack
-post fit within `TimeoutStopSec=90`.
+optional hosted-tool continuations and generation status, and the final
+platform post fit within `TimeoutStopSec=90`.
 
 The design does not protect against a malicious host operator or database
 writer, establish provider-side zero retention, verify a cryptographic signer,

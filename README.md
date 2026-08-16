@@ -8,7 +8,7 @@ conversational interface. See the linked project for the Reading Pack format,
 authoring workflow, and release checks.
 
 The core is independent of any particular chat service. This release includes
-a Slack adapter. Model connections support the Anthropic API and
+Slack and Discord adapters. Model connections support the Anthropic API and
 OpenAI-compatible APIs. Both model adapters can use provider-hosted web
 retrieval when enabled and supported by the endpoint.
 
@@ -18,7 +18,7 @@ may change before 1.0.
 ## Try it locally
 
 Python 3.11 or newer is required. The bundled test provider and synthetic
-Reading Pack make no model or Slack request.
+Reading Pack make no model or chat-service request.
 
 ```sh
 git clone https://github.com/ktakahashi74/reading-pack-bot.git
@@ -35,12 +35,10 @@ reading-pack-bot ask --config config.local.toml
 `ask` reads one question from standard input. Type the question and press
 Ctrl-D.
 
-## Deploy to Slack
+## Deploy
 
-Follow [Deploy Reading Pack Bot to Slack](docs/deploy-slack.md) to publish a
-real Reading Pack. The guide covers Pack selection, Slack app creation, model
-configuration, container installation, preflight checks, upgrades, and
-rollback.
+Use the [Slack](docs/deploy-slack.md) or [Discord](docs/deploy-discord.md)
+deployment guide to publish a real Reading Pack.
 
 ## Commands
 

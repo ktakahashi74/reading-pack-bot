@@ -11,7 +11,7 @@ import threading
 import time
 from pathlib import Path
 
-from .adapters import SlackAdapter
+from .adapters import DiscordAdapter, SlackAdapter
 from .config import AppConfig, load_config
 from .doctor import run_checks
 from .errors import (
@@ -50,7 +50,16 @@ def _logging(config: AppConfig) -> None:
         format="%(asctime)s %(levelname)s %(name)s %(message)s",
     )
     logging.getLogger("reading_pack_bot").setLevel(getattr(logging, config.runtime.log_level))
-    for logger_name in ("anthropic", "openai", "httpx", "httpcore", "slack_bolt", "slack_sdk"):
+    for logger_name in (
+        "anthropic",
+        "openai",
+        "httpx",
+        "httpcore",
+        "slack_bolt",
+        "slack_sdk",
+        "discord",
+        "aiohttp",
+    ):
         logging.getLogger(logger_name).setLevel(logging.WARNING)
 
 
@@ -162,14 +171,21 @@ def _run(config: AppConfig, once: bool) -> int:
             return _idle(once)
         provider = create_provider(config)
         service = BotService(config, pack, provider, store)
-        bot_token = os.environ.get("SLACK_BOT_TOKEN", "")
-        app_token = os.environ.get("SLACK_APP_TOKEN", "")
-        adapter = SlackAdapter(
-            service,
-            config.adapter,
-            bot_token=bot_token,
-            app_token=app_token,
-        )
+        if config.adapter.kind == "slack":
+            adapter = SlackAdapter(
+                service,
+                config.adapter,
+                bot_token=os.environ.get("SLACK_BOT_TOKEN", ""),
+                app_token=os.environ.get("SLACK_APP_TOKEN", ""),
+            )
+        elif config.adapter.kind == "discord":
+            adapter = DiscordAdapter(
+                service,
+                config.adapter,
+                bot_token=os.environ.get("DISCORD_BOT_TOKEN", ""),
+            )
+        else:  # pragma: no cover - disabled adapters return before construction
+            raise AssertionError("unsupported platform adapter")
         previous_sigterm = signal.getsignal(signal.SIGTERM)
         previous_sigint = signal.getsignal(signal.SIGINT)
 

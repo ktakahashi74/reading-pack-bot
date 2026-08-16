@@ -26,6 +26,7 @@ from ..config import (
 from ..errors import ConfigurationError
 from ..models import IncomingMessage
 from ..service import BotService
+from .common import split_message
 
 LOGGER = logging.getLogger(__name__)
 _MENTION_RE = re.compile(r"<@[A-Z0-9]+(?:\|[^>\r\n]*)?>")
@@ -65,27 +66,6 @@ def split_bot_invocation(text: str, bot_user_id: str | None) -> tuple[str, str]:
     if before:
         return "", before
     return "", "help"
-
-
-def split_message(text: str, limit: int) -> tuple[str, ...]:
-    if not text:
-        return ()
-    chunks: list[str] = []
-    remaining = text
-    while len(remaining) > limit:
-        window = remaining[:limit]
-        cut = window.rfind("\n", limit // 2)
-        if cut < 0:
-            cut = window.rfind(" ", limit // 2)
-        if cut >= 0:
-            cut += 1
-        else:
-            cut = limit
-        chunks.append(remaining[:cut])
-        remaining = remaining[cut:]
-    if remaining:
-        chunks.append(remaining)
-    return tuple(chunks)
 
 
 def neutralize_mentions(text: str) -> str:

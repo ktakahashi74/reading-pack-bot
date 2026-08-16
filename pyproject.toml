@@ -24,7 +24,8 @@ classifiers = [
 openai = ["openai==3.0.0"]
 anthropic = ["anthropic==0.120.2"]
 slack = ["slack-bolt==1.30.0"]
-all = ["anthropic==0.120.2", "openai==3.0.0", "slack-bolt==1.30.0"]
+discord = ["discord.py==2.7.1"]
+all = ["anthropic==0.120.2", "discord.py==2.7.1", "openai==3.0.0", "slack-bolt==1.30.0"]
 
 [project.scripts]
 reading-pack-bot = "reading_pack_bot.cli:main"

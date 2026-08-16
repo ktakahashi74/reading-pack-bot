@@ -52,7 +52,9 @@ jobs:
           python - <<'PY'
           import inspect
 
+          import discord
           from anthropic import Anthropic
+          from discord.abc import Messageable
           from openai import OpenAI
           from slack_bolt import App
           from slack_bolt.adapter.socket_mode import SocketModeHandler
@@ -89,5 +91,25 @@ jobs:
           assert callable(getattr(WebClient, "assistant_threads_setStatus", None))
           assert callable(getattr(SocketModeHandler, "connect", None))
           assert callable(getattr(SocketModeHandler, "close", None))
+          intents = discord.Intents.none()
+          intents.guilds = True
+          intents.guild_messages = True
+          intents.message_content = False
+          discord_client = discord.Client(
+              intents=intents,
+              allowed_mentions=discord.AllowedMentions.none(),
+              max_messages=None,
+          )
+          assert discord.__version__ == "2.7.1"
+          assert discord_client.intents.guilds
+          assert discord_client.intents.guild_messages
+          assert not discord_client.intents.message_content
+          assert "reconnect" in inspect.signature(discord.Client.start).parameters
+          assert {
+              "allowed_mentions",
+              "reference",
+              "mention_author",
+              "suppress_embeds",
+          } <= set(inspect.signature(Messageable.send).parameters)
           PY
-          PYTHONDONTWRITEBYTECODE=1 python -m unittest tests.test_anthropic_provider tests.test_openai_provider tests.test_slack_adapter -v
+          PYTHONDONTWRITEBYTECODE=1 python -m unittest tests.test_anthropic_provider tests.test_discord_adapter tests.test_openai_provider tests.test_slack_adapter -v

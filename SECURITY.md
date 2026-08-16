@@ -16,7 +16,7 @@ transcripts, or working attack strings.
 
 A Reading Pack SYS section is quality guidance, not access control. The primary
 controls are information minimization, one bounded read-only artifact, strict
-format validation, provider/platform role separation, default-deny Slack
+format validation, provider/platform role separation, default-deny platform
 routes, bounded retention, and regression tests. The bot always computes the
 artifact SHA-256 and can optionally compare it with an operator-supplied pin.
 
@@ -84,9 +84,16 @@ Inviting the app to a Slack Connect channel may expose it to external channel
 members. This bot does not request or inspect channel metadata, so operators
 must exclude unapproved shared channels.
 
+Discord server and channel IDs are exact-allowlisted. Direct messages and
+unmentioned guild messages are ignored. A thread below an allowed channel is
+treated as part of that route but keeps a separate conversation key. Replies
+disable user, role, and everyone mentions and suppress embeds. The adapter uses
+only standard Gateway intents; the privileged Message Content intent remains
+disabled.
+
 Generation concurrency is process-local and bounded to four workers. It is a
 capacity control, not a distributed exclusion mechanism; do not run multiple
-active bot processes against one Slack installation in the initial design.
+active bot processes against one platform installation in the initial design.
 Rate limits and the deployment-wide daily request bound still apply when
 parallelism is greater than one.
 
@@ -112,8 +119,9 @@ backups and filesystem snapshots require their own expiry policy.
 
 Core tests are offline and use only a CC0 synthetic pack, fake provider, and
 mocked platform client. CI must not receive production secrets or make live
-Slack or model-provider calls. The build toolchain, direct integrations, and every
-transitive live dependency are version- and hash-pinned for the documented
-Linux x86_64 deployment. The container base image is pinned by index digest.
+platform or model-provider calls. The build toolchain, direct integrations,
+and every transitive live dependency are version- and hash-pinned for the
+documented Linux x86_64 deployment. The container base image is pinned by
+index digest.
 Refresh locks and the image digest only as an explicit dependency and
 vulnerability review.

@@ -51,17 +51,19 @@ request_window_seconds = 60
 daily_requests = 500
 
 [adapter]
+# Select "slack" or "discord" only after platform setup and preflight.
 kind = "disabled"
 allowed_installations = []
-# Use "joined" with allowed_channels=[] only after the workspace-wide
-# channel-opt-in rollout has been approved.
+# Slack may use "joined" with allowed_channels=[] after approval. Discord
+# requires an explicit server and channel allowlist.
 channel_policy = "allowlist"
 allowed_channels = []
+# Set this and max_answer_characters to 2000 or less for Discord.
 message_chunk_characters = 3500
-# Non-local Slack deployments use one bounded waiting slot.
+# Non-local platform deployments use one bounded waiting slot.
 queue_size = 1
-# Keep 1 for the initial rollout; Slack accepts a bounded value from 1 to 4.
+# Keep 1 for the initial rollout; Slack and Discord accept 1 to 4.
 max_concurrent_generations = 1
 post_timeout_seconds = 10
-# Keep false until the Slack loading state is checked in a test channel.
+# Keep false until the platform's generation indicator passes staging.
 show_generation_status = false

@@ -53,16 +53,20 @@ request_window_seconds = 60
 daily_requests = 500
 
 [adapter]
+# "slack" and "discord" are available. Keep disabled until routing and
+# platform credentials have passed staging checks.
 kind = "disabled"
 allowed_installations = []
-# "allowlist" keeps an explicit channel list; "joined" accepts app_mention
-# events delivered from channels where the app has been invited.
+# "allowlist" keeps an explicit channel list. Slack also supports "joined";
+# Discord requires "allowlist" and treats an allowed channel's threads as
+# part of that route.
 channel_policy = "allowlist"
 allowed_channels = []
+# Discord messages are limited to 2000 characters.
 message_chunk_characters = 3500
 queue_size = 64
-# Start at 1. Slack permits 1..4; separate threads may then run concurrently.
+# Start at 1. Slack and Discord permit 1..4 concurrent conversations.
 max_concurrent_generations = 1
 post_timeout_seconds = 10
-# Optional Slack assistant loading state; enable only after a staging check.
+# Optional Slack assistant status or Discord typing indicator.
 show_generation_status = false

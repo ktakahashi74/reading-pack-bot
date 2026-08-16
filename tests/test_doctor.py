@@ -196,6 +196,31 @@ class DoctorPermissionTests(unittest.TestCase):
                 checks = {check.name: check for check in run_checks(config)}
         self.assertFalse(checks["slack_generation_status"].ok)
 
+    def test_discord_package_secret_and_allowlist_are_checked_offline(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "config.toml"
+            path.write_text(
+                config_text(
+                    adapter="discord",
+                    workspaces='"G1"',
+                    channels='"C1"',
+                ),
+                encoding="utf-8",
+            )
+            config = load_config(path)
+            with patch(
+                "reading_pack_bot.doctor.importlib.util.find_spec",
+                return_value=object(),
+            ) as find_spec, patch.dict(
+                os.environ, {"DISCORD_BOT_TOKEN": "test-token"}, clear=True
+            ):
+                checks = {check.name: check for check in run_checks(config)}
+        find_spec.assert_any_call("discord")
+        self.assertTrue(checks["discord_package"].ok)
+        self.assertTrue(checks["discord_secret"].ok)
+        self.assertTrue(checks["allowlist"].ok)
+        self.assertIn("server_allowlist", checks["allowlist"].detail)
+
     def test_joined_channel_policy_is_reported_as_configured_routing(self):
         with tempfile.TemporaryDirectory() as temporary:
             path = Path(temporary) / "config.toml"

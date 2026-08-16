@@ -6,7 +6,7 @@ Reading Pack Botは、[Reading Pack](https://github.com/ktakahashi74/reading-pac
 対話形式で公開するためのサーバーソフトウェアです。Reading Packの仕様、作成方法、公開前の
 検査については、リンク先のプロジェクトを参照してください。
 
-中核機能は特定の対話サービスに依存しません。現在のリリースにはSlack用
+中核機能は特定の対話サービスに依存しません。現在のリリースにはSlack用とDiscord用の
 アダプターが含まれます。モデルとの接続にはAnthropic APIまたはOpenAI互換APIを利用できます。
 Web取得を有効にすると、接続先が対応している場合に、提供者側の検索・取得機能を
 利用できます。
@@ -16,7 +16,7 @@ Web取得を有効にすると、接続先が対応している場合に、提�
 ## ローカルで試す
 
 Python 3.11以上が必要です。付属のテスト用モデル接続と合成Reading Packを使うため、モデルAPIや
-Slackには接続しません。
+対話サービスには接続しません。
 
 ```sh
 git clone https://github.com/ktakahashi74/reading-pack-bot.git
@@ -32,11 +32,10 @@ reading-pack-bot ask --config config.local.toml
 
 `ask`は標準入力から質問を1つ読みます。質問を入力してCtrl-Dを押してください。
 
-## Slackへ配備する
+## 配備する
 
-実際のReading PackをSlackで公開する手順は、[Slackへの配備手順](docs/deploy-slack.md)にまとめて
-います。Reading Packの選択、Slackアプリの作成、モデルAPIの設定、コンテナの導入、事前検査、
-更新と切り戻しまでを扱います。
+実際のReading Packを公開する手順は、[Slackへの配備手順](docs/deploy-slack.md)または
+[Discordへの配備手順](docs/deploy-discord.md)を参照してください。
 
 ## コマンド
 
