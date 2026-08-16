@@ -13,6 +13,7 @@ import unittest
 from reading_pack_bot.adapters.slack import (
     SlackAdapter,
     neutralize_mentions,
+    split_bot_invocation,
     split_message,
     strip_bot_mention,
 )
@@ -126,6 +127,31 @@ class SlackAdapterTests(unittest.TestCase):
     def test_strip_exact_bot_mention(self):
         self.assertEqual(strip_bot_mention("<@UBOT> hello <@U2>", "UBOT"), "hello <@U2>")
 
+    def test_split_invocation_uses_text_after_mention_as_request(self):
+        self.assertEqual(
+            split_bot_invocation(
+                "紹介文です。\n<@UBOT> help",
+                "UBOT",
+            ),
+            ("紹介文です。", "help"),
+        )
+
+    def test_split_invocation_supports_trailing_and_bare_mentions(self):
+        self.assertEqual(
+            split_bot_invocation("質問です <@UBOT>", "UBOT"),
+            ("", "質問です"),
+        )
+        self.assertEqual(
+            split_bot_invocation(" <@UBOT> \n", "UBOT"),
+            ("", "help"),
+        )
+
+    def test_split_invocation_accepts_slack_labeled_mention(self):
+        self.assertEqual(
+            split_bot_invocation("前置き <@UBOT|AGI Book Bot> status", "UBOT"),
+            ("前置き", "status"),
+        )
+
     def test_mentions_are_neutralized_in_generated_output(self):
         self.assertEqual(
             neutralize_mentions(
@@ -163,7 +189,22 @@ class SlackAdapterTests(unittest.TestCase):
         self.assertEqual(service.messages, [])
         job = adapter._jobs.get_nowait()
         self.assertEqual(job.message.text, "question")
+        self.assertEqual(job.message.inline_context, "")
         self.assertEqual(job.message.thread_id, "100.1")
+        adapter._jobs.task_done()
+
+    def test_listener_keeps_text_before_mention_as_inline_context(self):
+        adapter = self.make_adapter()
+        body, event = self.body(text="前置きです。\n<@UBOT> 比較してください")
+        adapter.receive_mention(
+            body=body,
+            event=event,
+            client=FakeClient(),
+            context={"bot_user_id": "UBOT"},
+        )
+        job = adapter._jobs.get_nowait()
+        self.assertEqual(job.message.inline_context, "前置きです。")
+        self.assertEqual(job.message.text, "比較してください")
         adapter._jobs.task_done()
 
     def test_listener_arguments_are_discoverable_by_slack_bolt(self):

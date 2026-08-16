@@ -91,8 +91,27 @@ class ServiceTests(unittest.TestCase):
         path.write_text(config_text(**kwargs), encoding="utf-8")
         return load_config(path)
 
-    def message(self, *, event="E1", workspace="T1", channel="C1", thread="TH1", actor="U1", text="question"):
-        return IncomingMessage(event, "slack", workspace, channel, thread, actor, text)
+    def message(
+        self,
+        *,
+        event="E1",
+        workspace="T1",
+        channel="C1",
+        thread="TH1",
+        actor="U1",
+        text="question",
+        inline_context="",
+    ):
+        return IncomingMessage(
+            event,
+            "slack",
+            workspace,
+            channel,
+            thread,
+            actor,
+            text,
+            inline_context=inline_context,
+        )
 
     def test_allowed_message_calls_provider_and_persists(self):
         reply = self.service.handle(self.message())
@@ -347,6 +366,28 @@ class ServiceTests(unittest.TestCase):
         self.assertIn("対話版（Reading Pack）", reply.text)
         self.assertEqual(self.provider.requests, [])
 
+    def test_help_command_ignores_inline_context(self):
+        reply = self.service.handle(
+            self.message(text="help", inline_context="公開案内の文章")
+        )
+        self.assertIn("**使い方**", reply.text)
+        self.assertEqual(self.provider.requests, [])
+
+    def test_inline_context_is_labeled_and_persisted_with_request(self):
+        self.service.handle(
+            self.message(text="比較して", inline_context="前提となる文章")
+        )
+        expected = (
+            "[Context before the bot mention in the same message]\n"
+            "前提となる文章\n\n"
+            "[Request after the bot mention]\n"
+            "比較して"
+        )
+        self.assertEqual(self.provider.requests[0].current_question, expected)
+        key = self.message().conversation_key(self.pack.sha256)
+        turns = self.store.load_turns(key, 10, 1000, self.now)
+        self.assertEqual(turns[0].content, expected)
+
     def test_help_reports_provider_web_when_enabled(self):
         config = self.make_config(
             provider="anthropic",
@@ -428,6 +469,13 @@ class ServiceTests(unittest.TestCase):
 
     def test_oversize_question_is_silent(self):
         reply = self.service.handle(self.message(text="x" * 201))
+        self.assertFalse(reply.handled)
+        self.assertEqual(self.provider.requests, [])
+
+    def test_oversize_inline_context_is_silent(self):
+        reply = self.service.handle(
+            self.message(text="question", inline_context="x" * 200)
+        )
         self.assertFalse(reply.handled)
         self.assertEqual(self.provider.requests, [])
 

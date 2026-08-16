@@ -55,6 +55,19 @@ def help_text(web_enabled: bool) -> str:
     return "\n".join(lines)
 
 
+def generation_question(message: IncomingMessage) -> str:
+    request = message.text.strip()
+    context = message.inline_context.strip()
+    if not context:
+        return request
+    return (
+        "[Context before the bot mention in the same message]\n"
+        f"{context}\n\n"
+        "[Request after the bot mention]\n"
+        f"{request}"
+    )
+
+
 def build_runtime_instructions(
     max_answer_characters: int,
     *,
@@ -241,7 +254,7 @@ class BotService:
                 self.config.store.conversation_ttl_seconds,
                 now,
             )
-            question = message.text.strip()
+            question = generation_question(message)
             request = GenerationRequest(
                 runtime_instructions=build_runtime_instructions(
                     self.config.policy.max_answer_characters,

@@ -282,11 +282,15 @@ In the invited channel, check these paths in order:
 1. `@Reading Pack Bot status` returns the Pack and model identity without a
    model call.
 2. `@Reading Pack Bot help` lists the commands without a model call.
-3. One ordinary question receives one threaded answer.
-4. A second question in that thread uses the visible conversation context.
-5. `@Reading Pack Bot reset` removes the bot's retained context for that
+3. A message containing introductory text followed by a new line with
+   `@Reading Pack Bot help` also lists the commands without a model call.
+4. Introductory text followed by `@Reading Pack Bot <question>` sends the text
+   before the mention as labeled context and the text after it as the request.
+5. One ordinary question receives one threaded answer.
+6. A second question in that thread uses the visible conversation context.
+7. `@Reading Pack Bot reset` removes the bot's retained context for that
    thread.
-6. If `show_generation_status=true`, the fixed waiting status appears only
+8. If `show_generation_status=true`, the fixed waiting status appears only
    while an ordinary answer is being generated and clears after the post.
 
 Pin a notice in every enabled channel: the Pack, mention, and retained visible

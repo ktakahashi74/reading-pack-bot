@@ -95,6 +95,13 @@ subscriptions, or `chat:write.public`. An invitation to a Slack Connect channel
 can expose the bot to external participants and must be treated as an access
 change.
 
+Within one Slack message, the first exact bot mention separates inline context
+from the explicit request. Text before the mention is sent to the model as
+labeled context, while text after it is used for command recognition and as the
+request. When there is no text after the mention, text before it becomes the
+request so trailing mentions remain usable. A bare mention displays help.
+Commands never send the inline context to the model.
+
 One to four workers may process different threads concurrently. Requests in
 the same thread remain serialized through generation, delivery, and history
 commit. The queue and locks are process-local, so one Slack installation maps
