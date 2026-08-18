@@ -24,18 +24,17 @@ mention-everyone permissions. Discord documents the underlying behavior in
 [Gateway Intents](https://docs.discord.com/developers/events/gateway#gateway-intents)
 and [Message Resource](https://docs.discord.com/developers/resources/message).
 
-## 2. Record the allowed routes
+## 2. Record the allowed server
 
-Enable Developer Mode in the Discord client, then copy:
+Enable Developer Mode in the Discord client, then copy the server ID for
+`allowed_installations`.
 
-- the server ID for `allowed_installations`;
-- each text or forum channel ID for `allowed_channels`.
-
-The bot ignores direct messages, other servers, unlisted channels, messages
+By default, the bot accepts explicit mentions from every channel it can access
+in an allowed server. Discord roles and channel permission overrides remain
+the access boundary. The bot ignores direct messages, other servers, messages
 from bots or webhooks, and messages without an explicit `@Bot` mention. A
-thread below an allowed channel is accepted automatically and keeps its own
-conversation history. An ordinary text channel has one shared conversation;
-use a Discord thread when conversations must be isolated.
+thread keeps its own conversation history. An ordinary text channel has one
+shared conversation; use a Discord thread when conversations must be isolated.
 
 Discord may show the bot user and its automatically managed permission role
 under the same name, and both mentions are colored. Select the user marked as
@@ -71,14 +70,23 @@ daily_requests = 500
 [adapter]
 kind = "discord"
 allowed_installations = ["123456789012345678"]
-channel_policy = "allowlist"
-allowed_channels = ["234567890123456789"]
+channel_policy = "accessible"
+allowed_channels = []
 message_chunk_characters = 2000
 queue_size = 1
 max_concurrent_generations = 1
 post_timeout_seconds = 10
 show_generation_status = true
 ```
+
+To restrict the bot to selected channels instead, set:
+
+```toml
+channel_policy = "allowlist"
+allowed_channels = ["234567890123456789"]
+```
+
+Threads below an allowlisted channel inherit that route.
 
 Discord messages are limited to 2000 characters. Non-local deployments also
 require the complete answer to fit one message, `provider.max_retries = 0`, a
@@ -129,7 +137,7 @@ kill_switch = false
 READING_PACK_BOT_DISABLED=0
 ```
 
-Restart the user service and test in one allowlisted channel:
+Restart the user service and test in one channel the bot can access:
 
 ```sh
 systemctl --user daemon-reload

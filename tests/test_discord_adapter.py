@@ -211,6 +211,20 @@ class DiscordAdapterTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(policy.check(job.message).allowed)
         adapter._jobs.task_done()
 
+    async def test_accessible_policy_accepts_any_channel_in_allowed_server(self):
+        adapter = self.make_adapter(
+            channel_policy="accessible",
+            allowed_channels=(),
+        )
+        await adapter.receive_message(
+            FakeMessage(channel=FakeChannel("C2")), FakeClient()
+        )
+        job = adapter._jobs.get_nowait()
+        self.assertEqual(job.message.installation_id, "G1")
+        self.assertEqual(job.message.channel_id, "C2")
+        self.assertEqual(job.message.thread_id, "C2")
+        adapter._jobs.task_done()
+
     async def test_unmentioned_automated_direct_and_disallowed_messages_are_ignored(self):
         cases = (
             FakeMessage(mentions=[]),

@@ -168,7 +168,7 @@ class DiscordAdapter:
             event_id=event_id,
             platform="discord",
             installation_id=installation_id,
-            # The policy rechecks the allowlisted parent route. A Discord
+            # The policy rechecks the configured parent route. A Discord
             # thread's own channel ID remains the conversation boundary.
             channel_id=route_channel_id,
             thread_id=channel_id,

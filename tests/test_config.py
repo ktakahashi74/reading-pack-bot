@@ -374,7 +374,7 @@ class ConfigTests(unittest.TestCase):
         self.assertTrue(config.adapter.show_generation_status)
         self.assertEqual(config.adapter.max_concurrent_generations, 4)
 
-    def test_discord_requires_server_and_channel_allowlists(self):
+    def test_discord_requires_server_allowlist(self):
         with self.assertRaisesRegex(ConfigurationError, "server allowlist"):
             self.load(
                 config_text(
@@ -383,6 +383,32 @@ class ConfigTests(unittest.TestCase):
                     channels='"C1"',
                 )
             )
+
+    def test_discord_defaults_to_accessible_channels(self):
+        text = config_text(
+            adapter="discord",
+            workspaces='"G1"',
+            channel_policy="accessible",
+            channels="",
+        ).replace('channel_policy = "accessible"\n', "")
+        config = self.load(text)
+        self.assertEqual(config.adapter.channel_policy, "accessible")
+        self.assertEqual(config.adapter.allowed_channels, ())
+        self.assertTrue(config.adapter.allows_channel("C-any-accessible-channel"))
+
+    def test_slack_defaults_to_accessible_channels(self):
+        text = config_text(
+            adapter="slack",
+            workspaces='"T1"',
+            channel_policy="accessible",
+            channels="",
+        ).replace('channel_policy = "accessible"\n', "")
+        config = self.load(text)
+        self.assertEqual(config.adapter.channel_policy, "accessible")
+        self.assertEqual(config.adapter.allowed_channels, ())
+        self.assertTrue(config.adapter.allows_channel("C-any-accessible-channel"))
+
+    def test_discord_explicit_allowlist_requires_channels(self):
         with self.assertRaisesRegex(ConfigurationError, "channel allowlist"):
             self.load(
                 config_text(
@@ -392,16 +418,18 @@ class ConfigTests(unittest.TestCase):
                 )
             )
 
-    def test_discord_rejects_joined_policy_and_chunks_over_2000(self):
-        with self.assertRaisesRegex(ConfigurationError, "channel_policy=allowlist"):
+    def test_discord_accessible_policy_rejects_channel_list(self):
+        with self.assertRaisesRegex(ConfigurationError, r"allowed_channels=\[\]"):
             self.load(
                 config_text(
                     adapter="discord",
                     workspaces='"G1"',
-                    channel_policy="joined",
-                    channels="",
+                    channel_policy="accessible",
+                    channels='"C1"',
                 )
             )
+
+    def test_discord_rejects_chunks_over_2000(self):
         with self.assertRaisesRegex(ConfigurationError, "to 2000"):
             self.load(
                 config_text(
@@ -416,19 +444,23 @@ class ConfigTests(unittest.TestCase):
         with self.assertRaisesRegex(ConfigurationError, "channel allowlist"):
             self.load(config_text(channels=""))
 
-    def test_joined_channel_policy_accepts_empty_channel_list(self):
-        config = self.load(config_text(channel_policy="joined", channels=""))
-        self.assertEqual(config.adapter.channel_policy, "joined")
+    def test_accessible_channel_policy_accepts_empty_channel_list(self):
+        config = self.load(config_text(channel_policy="accessible", channels=""))
+        self.assertEqual(config.adapter.channel_policy, "accessible")
         self.assertEqual(config.adapter.allowed_channels, ())
-        self.assertTrue(config.adapter.allows_channel("C-any-joined-channel"))
+        self.assertTrue(config.adapter.allows_channel("C-any-accessible-channel"))
         self.assertFalse(config.adapter.allows_channel(""))
 
-    def test_joined_channel_policy_rejects_ambiguous_channel_list(self):
+    def test_accessible_channel_policy_rejects_ambiguous_channel_list(self):
         with self.assertRaisesRegex(ConfigurationError, r"allowed_channels=\[\]"):
-            self.load(config_text(channel_policy="joined"))
+            self.load(config_text(channel_policy="accessible"))
+
+    def test_legacy_joined_channel_policy_normalizes_to_accessible(self):
+        config = self.load(config_text(channel_policy="joined", channels=""))
+        self.assertEqual(config.adapter.channel_policy, "accessible")
 
     def test_unknown_channel_policy_is_rejected(self):
-        with self.assertRaisesRegex(ConfigurationError, "allowlist or joined"):
+        with self.assertRaisesRegex(ConfigurationError, "allowlist or accessible"):
             self.load(config_text(channel_policy="workspace"))
 
     def test_disabled_adapter_accepts_empty_allowlists(self):

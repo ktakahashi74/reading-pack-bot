@@ -87,8 +87,8 @@ workspace must match `allowed_installations` exactly. Channel policy has two
 modes:
 
 - `allowlist` accepts only IDs in `allowed_channels`;
-- `joined` accepts mentions delivered from channels where the app was invited
-  in an allowed workspace.
+- `accessible` accepts mentions delivered from channels where the app was
+  invited and has access in an allowed workspace.
 
 Neither mode needs channel history, direct-message events, generic message
 subscriptions, or `chat:write.public`. An invitation to a Slack Connect channel
@@ -117,7 +117,8 @@ queue waits do not set it. Status failure does not stop the answer.
 The Discord adapter uses the Gateway with the standard Guilds and Guild
 Messages intents. It leaves the privileged Message Content intent disabled and
 accepts only messages that explicitly mention the bot. Direct messages, bot
-and webhook messages, other servers, and unlisted routes are ignored.
+and webhook messages, other servers, and routes outside the configured channel
+policy are ignored.
 
 A mention of the managed permission role associated with the bot is not a bot
 user mention, even when Discord renders both with the same colored name. The
@@ -125,11 +126,13 @@ adapter recognizes only a role whose Discord role tag names the current bot,
 posts a local correction, and makes no provider call. Unrelated role mentions
 remain silent.
 
-Every server and channel must match the configured allowlists. A thread under
-an allowed channel inherits that route, while the thread's own channel ID
-remains the conversation boundary. One to four workers may process different
-conversations; each conversation remains serialized through delivery and
-history commit.
+Every server must match `allowed_installations`. By default, explicit mentions
+are accepted from every channel the bot can access in an allowed server, with
+Discord roles and channel permission overrides as the channel boundary. An
+optional channel allowlist can narrow that scope. A thread under an allowlisted
+channel inherits that route, while the thread's own channel ID remains the
+conversation boundary. One to four workers may process different conversations;
+each conversation remains serialized through delivery and history commit.
 
 As on Slack, text before the exact bot mention becomes labeled inline context,
 and text after it is the explicit request. A trailing mention uses the text

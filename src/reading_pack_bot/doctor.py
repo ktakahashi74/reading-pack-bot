@@ -241,7 +241,7 @@ def run_checks(config: AppConfig) -> tuple[Check, ...]:
         tokens_present = bool(os.environ.get("SLACK_BOT_TOKEN") and os.environ.get("SLACK_APP_TOKEN"))
         checks.append(Check("slack_secrets", tokens_present or disabled, "present" if tokens_present else "not required while disabled", warning=not tokens_present))
         route_configured = bool(config.adapter.allowed_installations) and (
-            config.adapter.channel_policy == "joined"
+            config.adapter.channel_policy == "accessible"
             or bool(config.adapter.allowed_channels)
         )
         checks.append(
@@ -269,14 +269,15 @@ def run_checks(config: AppConfig) -> tuple[Check, ...]:
                 warning=not token_present,
             )
         )
-        route_configured = bool(
-            config.adapter.allowed_installations and config.adapter.allowed_channels
+        route_configured = bool(config.adapter.allowed_installations) and (
+            config.adapter.channel_policy == "accessible"
+            or bool(config.adapter.allowed_channels)
         )
         checks.append(
             Check(
                 "allowlist",
                 route_configured,
-                "server_allowlist + channel_policy=allowlist",
+                f"server_allowlist + channel_policy={config.adapter.channel_policy}",
             )
         )
     else:
