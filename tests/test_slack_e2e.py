@@ -236,14 +236,14 @@ class SlackEndToEndTests(unittest.TestCase):
         self.assertIn("channel_allowed=False", "\n".join(captured.output))
         self.assertEqual(self.provider.requests, [])
 
-    def test_joined_policy_handles_an_invited_channel_without_channel_allowlist(self) -> None:
+    def test_accessible_policy_handles_invited_channel_without_allowlist(self) -> None:
         self.adapter.config = replace(
             self.adapter.config,
-            channel_policy="joined",
+            channel_policy="accessible",
             allowed_channels=(),
         )
         self.service.policy.adapter = self.adapter.config
-        posts = self.send("help", event_id="E-joined", channel="C2")
+        posts = self.send("help", event_id="E-accessible", channel="C2")
         self.assertEqual(len(posts), 1)
         self.assertEqual(posts[0]["channel"], "C2")
 

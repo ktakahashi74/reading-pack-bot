@@ -196,14 +196,15 @@ class DoctorPermissionTests(unittest.TestCase):
                 checks = {check.name: check for check in run_checks(config)}
         self.assertFalse(checks["slack_generation_status"].ok)
 
-    def test_discord_package_secret_and_allowlist_are_checked_offline(self):
+    def test_discord_package_secret_and_server_allowlist_are_checked_offline(self):
         with tempfile.TemporaryDirectory() as temporary:
             path = Path(temporary) / "config.toml"
             path.write_text(
                 config_text(
                     adapter="discord",
                     workspaces='"G1"',
-                    channels='"C1"',
+                    channel_policy="accessible",
+                    channels="",
                 ),
                 encoding="utf-8",
             )
@@ -220,12 +221,13 @@ class DoctorPermissionTests(unittest.TestCase):
         self.assertTrue(checks["discord_secret"].ok)
         self.assertTrue(checks["allowlist"].ok)
         self.assertIn("server_allowlist", checks["allowlist"].detail)
+        self.assertIn("channel_policy=accessible", checks["allowlist"].detail)
 
-    def test_joined_channel_policy_is_reported_as_configured_routing(self):
+    def test_accessible_channel_policy_is_reported_as_configured_routing(self):
         with tempfile.TemporaryDirectory() as temporary:
             path = Path(temporary) / "config.toml"
             path.write_text(
-                config_text(channel_policy="joined", channels=""),
+                config_text(channel_policy="accessible", channels=""),
                 encoding="utf-8",
             )
             config = load_config(path)
@@ -235,7 +237,7 @@ class DoctorPermissionTests(unittest.TestCase):
             ):
                 checks = {check.name: check for check in run_checks(config)}
         self.assertTrue(checks["allowlist"].ok)
-        self.assertIn("channel_policy=joined", checks["allowlist"].detail)
+        self.assertIn("channel_policy=accessible", checks["allowlist"].detail)
 
 
 if __name__ == "__main__":
