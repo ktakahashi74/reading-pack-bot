@@ -54,9 +54,9 @@ daily_requests = 500
 # Select "slack" or "discord" only after platform setup and preflight.
 kind = "disabled"
 allowed_installations = []
-# Slack may use "joined" with allowed_channels=[] after approval. Discord
-# requires an explicit server and channel allowlist.
-channel_policy = "allowlist"
+# "accessible" accepts mentions from channels where the app is present and
+# permitted to read and reply. Every workspace or server remains allowlisted.
+channel_policy = "accessible"
 allowed_channels = []
 # Set this and max_answer_characters to 2000 or less for Discord.
 message_chunk_characters = 3500

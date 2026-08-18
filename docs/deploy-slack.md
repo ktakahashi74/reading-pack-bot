@@ -172,14 +172,14 @@ must support it explicitly. The sum of `max_search_uses` and `max_fetch_uses`
 sets `max_tool_calls`; `max_pause_continuations` and `max_content_tokens` apply
 only to Anthropic.
 
-Configure Slack for the test workspace. `joined` makes each app invitation the
-channel opt-in:
+Configure Slack for the test workspace. `accessible` makes each app invitation
+the channel opt-in:
 
 ```toml
 [adapter]
 kind = "slack"
 allowed_installations = ["T01234567"]
-channel_policy = "joined"
+channel_policy = "accessible"
 allowed_channels = []
 message_chunk_characters = 3500
 queue_size = 1
@@ -195,9 +195,9 @@ channel_policy = "allowlist"
 allowed_channels = ["C01234567"]
 ```
 
-Every workspace is always explicitly allowlisted. `joined` does not read all
-workspace messages; Slack delivers only mentions from channels where the app
-was invited.
+Every workspace is always explicitly allowlisted. `accessible` does not read
+all workspace messages; Slack delivers only mentions from channels where the
+app was invited.
 
 Put the two Slack tokens and the selected model key in `env`. Keep the
 environment kill switch active:

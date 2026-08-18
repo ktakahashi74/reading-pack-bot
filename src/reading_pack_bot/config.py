@@ -105,7 +105,10 @@ class AdapterConfig:
     def allows_channel(self, channel_id: str) -> bool:
         if not channel_id:
             return False
-        return self.channel_policy == "joined" or channel_id in self.allowed_channels
+        return self.channel_policy in {
+            "accessible",
+            "joined",
+        } or channel_id in self.allowed_channels
 
 
 @dataclass(frozen=True)
@@ -490,11 +493,20 @@ def load_config(path: str | Path) -> AppConfig:
     adapter_kind = _string(adapter_raw, "kind")
     if adapter_kind not in {"disabled", "slack", "discord"}:
         raise ConfigurationError("adapter.kind must be disabled, slack, or discord")
+    allowed_channels = _strings(adapter_raw, "allowed_channels")
+    default_channel_policy = (
+        "accessible" if not allowed_channels else "allowlist"
+    )
+    channel_policy = _string(
+        adapter_raw, "channel_policy", default=default_channel_policy
+    )
+    if channel_policy == "joined":
+        channel_policy = "accessible"
     adapter = AdapterConfig(
         kind=adapter_kind,
         allowed_installations=_strings(adapter_raw, "allowed_installations"),
-        channel_policy=_string(adapter_raw, "channel_policy", default="allowlist"),
-        allowed_channels=_strings(adapter_raw, "allowed_channels"),
+        channel_policy=channel_policy,
+        allowed_channels=allowed_channels,
         message_chunk_characters=_integer(adapter_raw, "message_chunk_characters", default=3500, minimum=500, maximum=10000),
         queue_size=_integer(adapter_raw, "queue_size", default=64, minimum=1, maximum=1000),
         max_concurrent_generations=_integer(
@@ -509,8 +521,10 @@ def load_config(path: str | Path) -> AppConfig:
             adapter_raw, "show_generation_status", default=False
         ),
     )
-    if adapter.channel_policy not in {"allowlist", "joined"}:
-        raise ConfigurationError("adapter.channel_policy must be allowlist or joined")
+    if adapter.channel_policy not in {"allowlist", "accessible"}:
+        raise ConfigurationError(
+            "adapter.channel_policy must be allowlist or accessible"
+        )
     if adapter.kind == "slack" and not adapter.allowed_installations:
         raise ConfigurationError("Slack requires a non-empty workspace allowlist")
     if adapter.kind == "discord" and not adapter.allowed_installations:
@@ -525,16 +539,28 @@ def load_config(path: str | Path) -> AppConfig:
         )
     if (
         adapter.kind == "slack"
-        and adapter.channel_policy == "joined"
+        and adapter.channel_policy == "accessible"
         and adapter.allowed_channels
     ):
         raise ConfigurationError(
-            "Slack channel_policy=joined requires adapter.allowed_channels=[]"
+            "Slack channel_policy=accessible requires adapter.allowed_channels=[]"
         )
-    if adapter.kind == "discord" and adapter.channel_policy != "allowlist":
-        raise ConfigurationError("Discord requires adapter.channel_policy=allowlist")
-    if adapter.kind == "discord" and not adapter.allowed_channels:
-        raise ConfigurationError("Discord requires a non-empty channel allowlist")
+    if (
+        adapter.kind == "discord"
+        and adapter.channel_policy == "allowlist"
+        and not adapter.allowed_channels
+    ):
+        raise ConfigurationError(
+            "Discord channel_policy=allowlist requires a non-empty channel allowlist"
+        )
+    if (
+        adapter.kind == "discord"
+        and adapter.channel_policy == "accessible"
+        and adapter.allowed_channels
+    ):
+        raise ConfigurationError(
+            "Discord channel_policy=accessible requires adapter.allowed_channels=[]"
+        )
     if adapter.kind == "discord" and adapter.message_chunk_characters > 2000:
         raise ConfigurationError(
             "Discord limits adapter.message_chunk_characters to 2000"

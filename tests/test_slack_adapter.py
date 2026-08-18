@@ -241,16 +241,16 @@ class SlackAdapterTests(unittest.TestCase):
         with self.assertRaises(queue.Empty):
             adapter._jobs.get_nowait()
 
-    def test_joined_policy_accepts_any_delivered_channel_in_allowed_workspace(self):
-        adapter = self.make_adapter(channel_policy="joined", allowed_channels=())
+    def test_accessible_policy_accepts_any_delivered_channel_in_allowed_workspace(self):
+        adapter = self.make_adapter(channel_policy="accessible", allowed_channels=())
         body, event = self.body(channel="C2")
         adapter.receive_mention(body=body, event=event, client=FakeClient())
         job = adapter._jobs.get_nowait()
         self.assertEqual(job.message.channel_id, "C2")
         adapter._jobs.task_done()
 
-    def test_joined_policy_still_rejects_missing_channel(self):
-        adapter = self.make_adapter(channel_policy="joined", allowed_channels=())
+    def test_accessible_policy_still_rejects_missing_channel(self):
+        adapter = self.make_adapter(channel_policy="accessible", allowed_channels=())
         body, event = self.body(channel="")
         with self.assertLogs("reading_pack_bot.adapters.slack", level="INFO") as captured:
             adapter.receive_mention(body=body, event=event, client=FakeClient())
