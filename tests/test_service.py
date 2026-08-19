@@ -323,14 +323,14 @@ class ServiceTests(unittest.TestCase):
     def test_reset_clears_only_current_thread(self):
         self.service.handle(self.message(event="E1", text="first"))
         reply = self.service.handle(self.message(event="E2", text="reset"))
-        self.assertIn("消去", reply.text)
+        self.assertIn("has been cleared", reply.text)
         self.service.handle(self.message(event="E3", text="after"))
         self.assertEqual(self.provider.requests[-1].prior_turns, ())
 
     def test_status_does_not_call_provider(self):
         reply = self.service.handle(self.message(text="status"))
-        self.assertIn("**Bot稼働状況**", reply.text)
-        self.assertIn("受付: 稼働中", reply.text)
+        self.assertIn("**Bot status**", reply.text)
+        self.assertIn("state: active", reply.text)
         self.assertIn(f"version: {__version__}", reply.text)
         self.assertIn("web: off", reply.text)
         self.assertIn("Pack: Reading Pack for *Clockwork Garden*", reply.text)
@@ -345,21 +345,22 @@ class ServiceTests(unittest.TestCase):
         self.assertIn("version: 1.0.0", reply.text)
         self.assertIn("date: 2026-08-12", reply.text)
         self.assertIn("status: canonical", reply.text)
-        self.assertIn("language: en (primary: ja)", reply.text)
-        self.assertIn("profile: nonfiction-reading:required", reply.text)
+        self.assertIn("language: en", reply.text)
+        self.assertIn("primary language: ja", reply.text)
+        self.assertIn("quality profile: nonfiction-reading (required)", reply.text)
         self.assertNotIn("basis:", reply.text)
         self.assertIn(f"sha256: {self.pack.sha256}", reply.text)
         self.assertEqual(self.provider.requests, [])
 
     def test_context_shows_active_history_without_exposing_contents(self):
         empty = self.service.handle(self.message(event="E-empty", text="context"))
-        self.assertIn("現在の回答文脈: 0往復", empty.text)
-        self.assertIn("回答生成に使う上限: 4往復", empty.text)
-        self.assertIn("保持期間: 1時間", empty.text)
+        self.assertIn("active history: 0 exchanges", empty.text)
+        self.assertIn("maximum history used: 4 exchanges", empty.text)
+        self.assertIn("retention: 1 hour", empty.text)
 
         self.service.handle(self.message(event="E-question", text="secret question"))
         reply = self.service.handle(self.message(event="E-context", text="context"))
-        self.assertIn("現在の回答文脈: 1往復", reply.text)
+        self.assertIn("active history: 1 exchange", reply.text)
         self.assertNotIn("secret question", reply.text)
         self.assertEqual(len(self.provider.requests), 1)
 
@@ -388,21 +389,21 @@ class ServiceTests(unittest.TestCase):
     def test_help_lists_commands_without_calling_provider(self):
         reply = self.service.handle(self.message(text="help"))
         self.assertTrue(reply.handled)
-        self.assertIn("`<質問>`", reply.text)
-        self.assertNotIn("Web検索", reply.text)
+        self.assertIn("`<question>`", reply.text)
+        self.assertNotIn("Web search", reply.text)
         self.assertIn("`status`", reply.text)
         self.assertIn("`pack`", reply.text)
         self.assertIn("`context`", reply.text)
         self.assertIn("`reset`", reply.text)
         self.assertIn("`help`", reply.text)
-        self.assertIn("対話版（Reading Pack）", reply.text)
+        self.assertIn("Ask this Reading Pack", reply.text)
         self.assertEqual(self.provider.requests, [])
 
     def test_help_command_ignores_inline_context(self):
         reply = self.service.handle(
             self.message(text="help", inline_context="公開案内の文章")
         )
-        self.assertIn("**使い方**", reply.text)
+        self.assertIn("**Usage**", reply.text)
         self.assertEqual(self.provider.requests, [])
 
     def test_inline_context_is_labeled_and_persisted_with_request(self):
@@ -428,7 +429,7 @@ class ServiceTests(unittest.TestCase):
         )
         service = BotService(config, self.pack, self.provider, self.store, clock=lambda: self.now)
         reply = service.handle(self.message(event="E-help-web", text="help"))
-        self.assertIn("Web検索・取得", reply.text)
+        self.assertIn("Web search and retrieval", reply.text)
         self.assertNotIn("Anthropic", reply.text)
 
     def test_status_does_not_consume_model_request_budget(self):
@@ -451,8 +452,11 @@ class ServiceTests(unittest.TestCase):
         config = self.make_config(requests_per_window=1, daily_requests=1)
         provider = FakeProvider()
         service = BotService(config, self.pack, provider, MemoryStore(), clock=lambda: self.now)
-        self.assertIn("使い方", service.handle(self.message(event="E-help", text="help")).text)
-        self.assertIn("利用上限", service.handle(self.message(event="E-status", text="status")).text)
+        self.assertIn("Usage", service.handle(self.message(event="E-help", text="help")).text)
+        self.assertIn(
+            "command rate limit",
+            service.handle(self.message(event="E-status", text="status")).text,
+        )
         self.assertTrue(service.handle(self.message(event="E-question", text="question")).handled)
         self.assertEqual(len(provider.requests), 1)
 
