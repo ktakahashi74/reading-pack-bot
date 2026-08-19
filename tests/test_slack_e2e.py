@@ -146,8 +146,9 @@ class SlackEndToEndTests(unittest.TestCase):
         self.assertEqual(len(posts), 1)
         self.assertIn("**Bot稼働状況**", posts[0]["markdown_text"])
         self.assertIn(f"version: {__version__}", posts[0]["markdown_text"])
-        self.assertIn("Pack: v=1.0.0", posts[0]["markdown_text"])
-        self.assertIn(f"sha256={self.pack.sha256[:12]}", posts[0]["markdown_text"])
+        self.assertIn("Pack: Reading Pack for *Clockwork Garden*", posts[0]["markdown_text"])
+        self.assertIn("Pack version: 1.0.0", posts[0]["markdown_text"])
+        self.assertIn(f"Pack sha256: {self.pack.sha256[:12]}", posts[0]["markdown_text"])
         self.assertEqual(self.provider.requests, [])
 
     def test_question_preserves_markdown_and_neutralizes_mentions(self) -> None:

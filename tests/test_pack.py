@@ -29,6 +29,10 @@ class PackTests(unittest.TestCase):
     def test_golden_fixture(self):
         pack = self.load()
         self.assertEqual(pack.sha256, FIXTURE_SHA256)
+        self.assertEqual(
+            pack.name,
+            "Reading Pack for *Clockwork Garden* — data for AI input, not a substitute for the book",
+        )
         self.assertEqual(pack.header["profile"], "nonfiction-reading:required")
         self.assertEqual(pack.end_counts["chapters"], 2)
 
@@ -103,6 +107,29 @@ class PackTests(unittest.TestCase):
     def test_duplicate_section_rejected(self):
         path, checksum = self.mutated(lambda raw: raw.replace(b"## BIB |", b"## SYS |", 1))
         with self.assertRaisesRegex(PackValidationError, "duplicated"):
+            self.load(path, checksum)
+
+    def test_missing_h1_name_rejected(self):
+        path, checksum = self.mutated(
+            lambda raw: raw.replace(b"# Reading Pack for", b"Reading Pack for", 1)
+        )
+        with self.assertRaisesRegex(PackValidationError, "one non-empty H1"):
+            self.load(path, checksum)
+
+    def test_duplicate_h1_name_rejected(self):
+        path, checksum = self.mutated(
+            lambda raw: raw.replace(
+                b"# Reading Pack for", b"# Duplicate name\n\n# Reading Pack for", 1
+            )
+        )
+        with self.assertRaisesRegex(PackValidationError, "one non-empty H1"):
+            self.load(path, checksum)
+
+    def test_empty_h1_name_rejected(self):
+        path, checksum = self.mutated(
+            lambda raw: raw.replace(raw.splitlines()[2], b"# ", 1)
+        )
+        with self.assertRaisesRegex(PackValidationError, "one non-empty H1"):
             self.load(path, checksum)
 
     def test_unresolved_template_rejected(self):

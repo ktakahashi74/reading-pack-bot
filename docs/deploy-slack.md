@@ -280,14 +280,15 @@ journalctl --user -u reading-pack-bot.service -f
 In the invited channel, check these paths in order:
 
 1. `@Reading Pack Bot status` returns the bot version, operating configuration,
-   and a short Pack identity without a model call.
+   and the Pack name, version, and short SHA-256 without a model call.
 2. `@Reading Pack Bot help` lists the commands without a model call.
 3. A message containing introductory text followed by a new line with
    `@Reading Pack Bot help` also lists the commands without a model call.
 4. Introductory text followed by `@Reading Pack Bot <question>` sends the text
    before the mention as labeled context and the text after it as the request.
-5. `@Reading Pack Bot pack` returns the Pack metadata and full SHA-256 without
-   a model call.
+5. `@Reading Pack Bot pack` returns the Pack name, public metadata, and full
+   SHA-256 without a model call. It does not expose the generator's `basis`
+   path.
 6. `@Reading Pack Bot context` returns the active turn count, history limit,
    and retention period without displaying conversation content.
 7. One ordinary question receives one threaded answer.

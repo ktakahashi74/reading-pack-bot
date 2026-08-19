@@ -14,6 +14,7 @@ __version__ = "0.4.0"
 class PackSnapshot:
     path: Path
     raw_markdown: str
+    name: str
     sha256: str
     header: Mapping[str, str]
     end_counts: Mapping[str, int]
