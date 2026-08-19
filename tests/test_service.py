@@ -8,7 +8,7 @@ from unittest.mock import patch
 
 from reading_pack_bot.config import load_config
 from reading_pack_bot.errors import ProviderError, StoreError
-from reading_pack_bot.models import GenerationResult, IncomingMessage
+from reading_pack_bot.models import GenerationResult, IncomingMessage, __version__
 from reading_pack_bot.pack import load_pack
 from reading_pack_bot.providers import FakeProvider
 from reading_pack_bot.service import BotService, build_runtime_instructions
@@ -329,9 +329,37 @@ class ServiceTests(unittest.TestCase):
 
     def test_status_does_not_call_provider(self):
         reply = self.service.handle(self.message(text="status"))
-        self.assertIn("sha256=", reply.text)
-        self.assertIn("web=off", reply.text)
+        self.assertIn("**Bot稼働状況**", reply.text)
+        self.assertIn("受付: 稼働中", reply.text)
+        self.assertIn(f"version: {__version__}", reply.text)
+        self.assertIn("web: off", reply.text)
+        self.assertIn("Pack: v=1.0.0", reply.text)
+        self.assertIn(f"sha256={self.pack.sha256[:12]}", reply.text)
         self.assertEqual(self.provider.requests, [])
+
+    def test_pack_shows_details_without_calling_provider(self):
+        reply = self.service.handle(self.message(text="pack"))
+        self.assertIn("**Reading Pack**", reply.text)
+        self.assertIn("version: 1.0.0", reply.text)
+        self.assertIn("date: 2026-08-12", reply.text)
+        self.assertIn("status: canonical", reply.text)
+        self.assertIn("language: en (primary: ja)", reply.text)
+        self.assertIn("profile: nonfiction-reading:required", reply.text)
+        self.assertIn("basis: data/pack.en.json", reply.text)
+        self.assertIn(f"sha256: {self.pack.sha256}", reply.text)
+        self.assertEqual(self.provider.requests, [])
+
+    def test_context_shows_active_history_without_exposing_contents(self):
+        empty = self.service.handle(self.message(event="E-empty", text="context"))
+        self.assertIn("現在の回答文脈: 0往復", empty.text)
+        self.assertIn("回答生成に使う上限: 4往復", empty.text)
+        self.assertIn("保持期間: 1時間", empty.text)
+
+        self.service.handle(self.message(event="E-question", text="secret question"))
+        reply = self.service.handle(self.message(event="E-context", text="context"))
+        self.assertIn("現在の回答文脈: 1往復", reply.text)
+        self.assertNotIn("secret question", reply.text)
+        self.assertEqual(len(self.provider.requests), 1)
 
     def test_web_enabled_questions_are_passed_unchanged(self):
         config = self.make_config(
@@ -353,7 +381,7 @@ class ServiceTests(unittest.TestCase):
             provider.requests[1].runtime_instructions,
         )
         status = service.handle(self.message(event="E-status-web", text="status"))
-        self.assertIn("web=on", status.text)
+        self.assertIn("web: on", status.text)
 
     def test_help_lists_commands_without_calling_provider(self):
         reply = self.service.handle(self.message(text="help"))
@@ -361,6 +389,8 @@ class ServiceTests(unittest.TestCase):
         self.assertIn("`<質問>`", reply.text)
         self.assertNotIn("Web検索", reply.text)
         self.assertIn("`status`", reply.text)
+        self.assertIn("`pack`", reply.text)
+        self.assertIn("`context`", reply.text)
         self.assertIn("`reset`", reply.text)
         self.assertIn("`help`", reply.text)
         self.assertIn("対話版（Reading Pack）", reply.text)

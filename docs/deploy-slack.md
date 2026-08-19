@@ -279,18 +279,22 @@ journalctl --user -u reading-pack-bot.service -f
 
 In the invited channel, check these paths in order:
 
-1. `@Reading Pack Bot status` returns the Pack and model identity without a
-   model call.
+1. `@Reading Pack Bot status` returns the bot version, operating configuration,
+   and a short Pack identity without a model call.
 2. `@Reading Pack Bot help` lists the commands without a model call.
 3. A message containing introductory text followed by a new line with
    `@Reading Pack Bot help` also lists the commands without a model call.
 4. Introductory text followed by `@Reading Pack Bot <question>` sends the text
    before the mention as labeled context and the text after it as the request.
-5. One ordinary question receives one threaded answer.
-6. A second question in that thread uses the visible conversation context.
-7. `@Reading Pack Bot reset` removes the bot's retained context for that
+5. `@Reading Pack Bot pack` returns the Pack metadata and full SHA-256 without
+   a model call.
+6. `@Reading Pack Bot context` returns the active turn count, history limit,
+   and retention period without displaying conversation content.
+7. One ordinary question receives one threaded answer.
+8. A second question in that thread uses the visible conversation context.
+9. `@Reading Pack Bot reset` removes the bot's retained context for that
    thread.
-8. If `show_generation_status=true`, the fixed waiting status appears only
+10. If `show_generation_status=true`, the fixed waiting status appears only
    while an ordinary answer is being generated and clears after the post.
 
 Pin a notice in every enabled channel: the Pack, mention, and retained visible
