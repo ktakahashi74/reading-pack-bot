@@ -15,6 +15,7 @@ class PackSnapshot:
     path: Path
     raw_markdown: str
     name: str
+    description: str | None
     sha256: str
     header: Mapping[str, str]
     end_counts: Mapping[str, int]

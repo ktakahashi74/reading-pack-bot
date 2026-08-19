@@ -31,10 +31,42 @@ class PackTests(unittest.TestCase):
         self.assertEqual(pack.sha256, FIXTURE_SHA256)
         self.assertEqual(
             pack.name,
-            "Reading Pack for *Clockwork Garden* — data for AI input, not a substitute for the book",
+            "Reading Pack for *Clockwork Garden*",
+        )
+        self.assertEqual(
+            pack.description,
+            "data for AI input, not a substitute for the book",
         )
         self.assertEqual(pack.header["profile"], "nonfiction-reading:required")
         self.assertEqual(pack.end_counts["chapters"], 2)
+
+    def test_h1_without_description_keeps_the_full_name(self):
+        path, checksum = self.mutated(
+            lambda raw: raw.replace(
+                b"# Reading Pack for *Clockwork Garden*"
+                b" \xe2\x80\x94 data for AI input, not a substitute for the book\n",
+                b"# Reading Pack for *Clockwork Garden*\n",
+                1,
+            )
+        )
+        pack = self.load(path, checksum)
+        self.assertEqual(pack.name, "Reading Pack for *Clockwork Garden*")
+        self.assertIsNone(pack.description)
+
+    def test_h1_uses_the_final_separator_between_name_and_description(self):
+        path, checksum = self.mutated(
+            lambda raw: raw.replace(
+                b"# Reading Pack for *Clockwork Garden*",
+                b"# Reading Pack for *Clockwork \xe2\x80\x94 Garden*",
+                1,
+            )
+        )
+        pack = self.load(path, checksum)
+        self.assertEqual(pack.name, "Reading Pack for *Clockwork \u2014 Garden*")
+        self.assertEqual(
+            pack.description,
+            "data for AI input, not a substitute for the book",
+        )
 
     def test_optional_policy_end_count_is_accepted(self):
         path, checksum = self.mutated(

@@ -147,6 +147,7 @@ class SlackEndToEndTests(unittest.TestCase):
         self.assertIn("**Bot status**", posts[0]["markdown_text"])
         self.assertIn(f"version: {__version__}", posts[0]["markdown_text"])
         self.assertIn("Pack: Reading Pack for *Clockwork Garden*", posts[0]["markdown_text"])
+        self.assertNotIn("data for AI input", posts[0]["markdown_text"])
         self.assertIn("Pack version: 1.0.0", posts[0]["markdown_text"])
         self.assertIn(f"Pack sha256: {self.pack.sha256[:12]}", posts[0]["markdown_text"])
         self.assertEqual(self.provider.requests, [])
