@@ -44,18 +44,18 @@ _MAX_DISPLAY_NAME_CHARACTERS = 300
 
 def help_text(web_enabled: bool) -> str:
     lines = [
-        "**使い方**",
-        "- `<質問>` — この対話版（Reading Pack）に基づいて回答",
+        "**Usage**",
+        "- `<question>` — Ask this Reading Pack a question",
     ]
     if web_enabled:
-        lines.append("- 必要に応じてWeb検索・取得を使用")
+        lines.append("- Web search and retrieval may be used when needed")
     lines.extend(
         (
-            "- `status` — Botの稼働状況と使用中のPackを表示",
-            "- `pack` — 使用中のPackの詳細を表示",
-            "- `context` — このスレッドで回答に使う会話履歴を表示",
-            "- `reset` — このスレッドの会話履歴を消去",
-            "- `help` — この使い方を表示",
+            "- `status` — Show bot status and the active Pack",
+            "- `pack` — Show details for the active Pack",
+            "- `context` — Show conversation context used for this thread",
+            "- `reset` — Clear conversation history for this thread",
+            "- `help` — Show this usage",
         )
     )
     return "\n".join(lines)
@@ -63,15 +63,30 @@ def help_text(web_enabled: bool) -> str:
 
 def _retention_text(seconds: int) -> str:
     if seconds == 0:
-        return "resetまたは手動削除まで"
+        return "until reset or manual deletion"
     for unit_seconds, unit_name in (
-        (86400, "日"),
-        (3600, "時間"),
-        (60, "分"),
+        (86400, "day"),
+        (3600, "hour"),
+        (60, "minute"),
     ):
         if seconds % unit_seconds == 0:
-            return f"{seconds // unit_seconds}{unit_name}"
-    return f"{seconds}秒"
+            count = seconds // unit_seconds
+            suffix = "" if count == 1 else "s"
+            return f"{count} {unit_name}{suffix}"
+    suffix = "" if seconds == 1 else "s"
+    return f"{seconds} second{suffix}"
+
+
+def _exchange_text(count: int) -> str:
+    suffix = "" if count == 1 else "s"
+    return f"{count} exchange{suffix}"
+
+
+def _quality_profile_text(value: str) -> str:
+    profile, separator, requirement = value.rpartition(":")
+    if separator and profile and requirement:
+        return f"{profile} ({requirement})"
+    return value
 
 
 def _display_name(name: str) -> str:
@@ -211,10 +226,12 @@ class BotService:
             category,
             _log_id(message.installation_id + ":" + message.channel_id),
         )
-        return self._reply(
-            BotReply(handled=True, text="現在、利用上限に達しています。しばらく待ってから再度お試しください。"),
-            deliver,
+        text = (
+            "The command rate limit has been reached. Please try again later."
+            if category == "command"
+            else "現在、利用上限に達しています。しばらく待ってから再度お試しください。"
         )
+        return self._reply(BotReply(handled=True, text=text), deliver)
 
     def handle(
         self,
@@ -254,7 +271,10 @@ class BotService:
             if command == "reset":
                 self.store.reset(key)
                 return self._reply(
-                    BotReply(handled=True, text="このスレッドの会話履歴を消去しました。"),
+                    BotReply(
+                        handled=True,
+                        text="Conversation history for this thread has been cleared.",
+                    ),
                     deliver,
                 )
             if command == "status":
@@ -265,8 +285,8 @@ class BotService:
                     BotReply(
                         handled=True,
                         text=(
-                            "**Bot稼働状況**\n"
-                            "- 受付: 稼働中\n"
+                            "**Bot status**\n"
+                            "- state: active\n"
                             f"- version: {__version__}\n"
                             f"- stage: {self.config.runtime.stage}\n"
                             f"- model: {model}\n"
@@ -289,8 +309,10 @@ class BotService:
                             f"- version: {header['v']}\n"
                             f"- date: {header['date']}\n"
                             f"- status: {header['status']}\n"
-                            f"- language: {header['lang']} (primary: {header['primary']})\n"
-                            f"- profile: {header['profile']}\n"
+                            f"- language: {header['lang']}\n"
+                            f"- primary language: {header['primary']}\n"
+                            "- quality profile: "
+                            f"{_quality_profile_text(header['profile'])}\n"
                             f"- sha256: {self.pack.sha256}"
                         ),
                     ),
@@ -307,10 +329,11 @@ class BotService:
                     BotReply(
                         handled=True,
                         text=(
-                            "**会話コンテキスト**\n"
-                            f"- 現在の回答文脈: {len(turns) // 2}往復\n"
-                            f"- 回答生成に使う上限: {self.config.store.history_turns}往復\n"
-                            "- 保持期間: "
+                            "**Conversation context**\n"
+                            f"- active history: {_exchange_text(len(turns) // 2)}\n"
+                            "- maximum history used: "
+                            f"{_exchange_text(self.config.store.history_turns)}\n"
+                            "- retention: "
                             f"{_retention_text(self.config.store.conversation_ttl_seconds)}"
                         ),
                     ),

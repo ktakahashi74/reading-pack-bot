@@ -114,7 +114,7 @@ class SlackEndToEndTests(unittest.TestCase):
     def test_help_reaches_slack_without_model_call(self) -> None:
         posts = self.send("help", event_id="E-help")
         self.assertEqual(len(posts), 1)
-        self.assertIn("**使い方**", posts[0]["markdown_text"])
+        self.assertIn("**Usage**", posts[0]["markdown_text"])
         self.assertIn("`status`", posts[0]["markdown_text"])
         self.assertEqual(posts[0]["thread_ts"], "90.0")
         self.assertFalse(posts[0]["reply_broadcast"])
@@ -132,19 +132,19 @@ class SlackEndToEndTests(unittest.TestCase):
             raw=True,
         )
         self.assertEqual(len(posts), 1)
-        self.assertIn("**使い方**", posts[0]["markdown_text"])
+        self.assertIn("**Usage**", posts[0]["markdown_text"])
         self.assertEqual(self.provider.requests, [])
 
     def test_bare_mention_displays_help_without_model_call(self) -> None:
         posts = self.send("<@UBOT>", event_id="E-bare", raw=True)
         self.assertEqual(len(posts), 1)
-        self.assertIn("**使い方**", posts[0]["markdown_text"])
+        self.assertIn("**Usage**", posts[0]["markdown_text"])
         self.assertEqual(self.provider.requests, [])
 
     def test_status_reaches_slack_without_model_call(self) -> None:
         posts = self.send("status", event_id="E-status")
         self.assertEqual(len(posts), 1)
-        self.assertIn("**Bot稼働状況**", posts[0]["markdown_text"])
+        self.assertIn("**Bot status**", posts[0]["markdown_text"])
         self.assertIn(f"version: {__version__}", posts[0]["markdown_text"])
         self.assertIn("Pack: Reading Pack for *Clockwork Garden*", posts[0]["markdown_text"])
         self.assertIn("Pack version: 1.0.0", posts[0]["markdown_text"])
@@ -222,7 +222,7 @@ class SlackEndToEndTests(unittest.TestCase):
         self.send("second", event_id="E-second", thread="91.0")
         posts = self.send("reset", event_id="E-reset", thread="90.0")
         self.assertEqual(len(posts), 1)
-        self.assertIn("消去", posts[0]["markdown_text"])
+        self.assertIn("has been cleared", posts[0]["markdown_text"])
         self.assertEqual(
             self.store.load_turns(self.conversation_key("90.0"), 10, 3600, 100.0),
             (),
