@@ -3,7 +3,7 @@ Description=Reading Pack Bot (rootless Podman)
 Documentation=https://github.com/ktakahashi74/reading-pack-bot
 
 [Container]
-Image=localhost/reading-pack-bot:0.4.0
+Image=localhost/reading-pack-bot:0.4.1
 Pull=never
 ContainerName=reading-pack-bot
 User=0
@@ -28,7 +28,7 @@ Restart=on-failure
 RestartSec=5s
 RestartPreventExitStatus=2
 TimeoutStartSec=30s
-TimeoutStopSec=90s
+TimeoutStopSec=120s
 UMask=0077
 MemoryMax=512M
 TasksMax=64

@@ -23,7 +23,7 @@ _ANTHROPIC_CURRENT_MODEL_RE = re.compile(
 _PROVIDER_MODEL_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/+-]{0,199}$")
 _ENVIRONMENT_NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]{0,127}$")
 OPENAI_COMPATIBLE_DEFAULT_BASE_URL = "https://api.openai.com/v1"
-SERVICE_TIMEOUT_STOP_SECONDS = 90
+SERVICE_TIMEOUT_STOP_SECONDS = 120
 SERVICE_SHUTDOWN_MARGIN_SECONDS = 5
 
 
@@ -387,9 +387,9 @@ def load_config(path: str | Path) -> AppConfig:
         raise ConfigurationError("provider.model is required for Anthropic")
     if provider_kind == "anthropic" and not _anthropic_model_is_pinned(provider_model):
         raise ConfigurationError("Anthropic requires a pinned model ID, not a floating alias")
-    provider_timeout = _number(provider_raw, "timeout_seconds", default=60.0, minimum=1.0, maximum=600.0)
-    if runtime.stage != "local" and provider_timeout > 60.0:
-        raise ConfigurationError("staging and production limit provider timeout_seconds to 60")
+    provider_timeout = _number(provider_raw, "timeout_seconds", default=90.0, minimum=1.0, maximum=600.0)
+    if runtime.stage != "local" and provider_timeout > 90.0:
+        raise ConfigurationError("staging and production limit provider timeout_seconds to 90")
     provider = ProviderConfig(
         kind=provider_kind,
         model=provider_model,

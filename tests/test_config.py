@@ -67,10 +67,14 @@ class ConfigTests(unittest.TestCase):
         self.assertEqual(config.adapter.max_concurrent_generations, 1)
 
     def test_output_defaults_match_single_message_evaluation(self):
-        text = config_text().replace("max_output_tokens = 800\n", "").replace(
-            "max_answer_characters = 500\n", ""
+        text = (
+            config_text()
+            .replace("timeout_seconds = 30.0\n", "")
+            .replace("max_output_tokens = 800\n", "")
+            .replace("max_answer_characters = 500\n", "")
         )
         config = self.load(text)
+        self.assertEqual(config.provider.timeout_seconds, 90.0)
         self.assertEqual(config.provider.max_output_tokens, 4096)
         self.assertEqual(config.policy.max_answer_characters, 3500)
 
@@ -303,22 +307,22 @@ class ConfigTests(unittest.TestCase):
             "model": "claude-sonnet-5",
             "web_enabled": True,
         }
-        config = self.load(self.staging_slack(provider_timeout=35.0, **common))
+        config = self.load(self.staging_slack(provider_timeout=52.0, **common))
         self.assertTrue(config.web.enabled)
         no_continuation = self.load(
             self.staging_slack(
-                provider_timeout=60.0,
+                provider_timeout=90.0,
                 max_web_pause_continuations=0,
                 **common,
             )
         )
         self.assertEqual(no_continuation.web.max_pause_continuations, 0)
         with self.assertRaisesRegex(ConfigurationError, "TimeoutStopSec"):
-            self.load(self.staging_slack(provider_timeout=38.0, **common))
+            self.load(self.staging_slack(provider_timeout=53.0, **common))
         with self.assertRaisesRegex(ConfigurationError, "TimeoutStopSec"):
             self.load(
                 self.staging_slack(
-                    provider_timeout=26.0,
+                    provider_timeout=36.0,
                     max_web_pause_continuations=2,
                     **common,
                 )
@@ -329,7 +333,7 @@ class ConfigTests(unittest.TestCase):
             self.staging_slack(
                 provider="openai-compatible",
                 model="gpt-test-2026-01-01",
-                provider_timeout=60.0,
+                provider_timeout=90.0,
                 web_enabled=True,
             )
         )
@@ -660,7 +664,7 @@ class ConfigTests(unittest.TestCase):
                     provider="anthropic",
                     model="claude-sonnet-5",
                     web_enabled=True,
-                    provider_timeout=35.0,
+                    provider_timeout=48.0,
                 )
             )
 
@@ -676,14 +680,14 @@ class ConfigTests(unittest.TestCase):
             "web_enabled": True,
             "show_generation_status": True,
         }
-        config = self.load(self.staging_slack(provider_timeout=30.0, **common))
+        config = self.load(self.staging_slack(provider_timeout=47.0, **common))
         self.assertTrue(config.adapter.show_generation_status)
         with self.assertRaisesRegex(ConfigurationError, "TimeoutStopSec"):
-            self.load(self.staging_slack(provider_timeout=35.0, **common))
+            self.load(self.staging_slack(provider_timeout=48.0, **common))
 
     def test_nonlocal_slack_rejects_timeout_over_shutdown_bound(self):
         with self.assertRaisesRegex(ConfigurationError, "timeout_seconds"):
-            self.load(self.staging_slack(provider_timeout=61.0))
+            self.load(self.staging_slack(provider_timeout=91.0))
 
     def test_nonlocal_slack_rejects_provider_retries(self):
         with self.assertRaisesRegex(ConfigurationError, "max_retries"):

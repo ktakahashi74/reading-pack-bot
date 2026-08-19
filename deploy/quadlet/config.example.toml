@@ -20,7 +20,7 @@ max_bytes = 524288
 # api_key_env = "MODEL_API_KEY"
 kind = "fake"
 model = ""
-timeout_seconds = 60.0
+timeout_seconds = 90.0
 max_retries = 0
 max_output_tokens = 4096
 
@@ -32,7 +32,8 @@ max_output_tokens = 4096
 enabled = false
 max_search_uses = 8
 max_fetch_uses = 5
-max_pause_continuations = 1
+# Keep zero with a 90-second provider timeout so shutdown remains bounded.
+max_pause_continuations = 0
 max_content_tokens = 20000
 
 [store]

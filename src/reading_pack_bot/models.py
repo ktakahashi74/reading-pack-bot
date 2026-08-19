@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Literal
 
-__version__ = "0.4.0"
+__version__ = "0.4.1"
 
 
 @dataclass(frozen=True)

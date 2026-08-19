@@ -21,7 +21,7 @@ max_bytes = 524288
 # Anthropic requires a pinned Claude model ID such as "claude-sonnet-5".
 kind = "fake"
 model = ""
-timeout_seconds = 60.0
+timeout_seconds = 90.0
 max_retries = 1
 max_output_tokens = 4096
 

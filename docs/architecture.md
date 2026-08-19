@@ -176,7 +176,7 @@ the image, configuration, environment file, Pack, and database.
 SIGTERM stops intake, discards queued work, and lets the active request finish
 within configured bounds. Configuration checks that one provider call,
 optional hosted-tool continuations and generation status, and the final
-platform post fit within `TimeoutStopSec=90`.
+platform post fit within `TimeoutStopSec=120`.
 
 The design does not protect against a malicious host operator or database
 writer, establish provider-side zero retention, verify a cryptographic signer,
