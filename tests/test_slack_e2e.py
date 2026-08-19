@@ -8,7 +8,7 @@ from unittest.mock import patch
 
 from reading_pack_bot.adapters.slack import SlackAdapter
 from reading_pack_bot.config import load_config
-from reading_pack_bot.models import IncomingMessage
+from reading_pack_bot.models import IncomingMessage, __version__
 from reading_pack_bot.pack import load_pack
 from reading_pack_bot.providers import FakeProvider
 from reading_pack_bot.service import BotService
@@ -144,7 +144,9 @@ class SlackEndToEndTests(unittest.TestCase):
     def test_status_reaches_slack_without_model_call(self) -> None:
         posts = self.send("status", event_id="E-status")
         self.assertEqual(len(posts), 1)
-        self.assertIn("Reading Pack v=1.0.0", posts[0]["markdown_text"])
+        self.assertIn("**Bot稼働状況**", posts[0]["markdown_text"])
+        self.assertIn(f"version: {__version__}", posts[0]["markdown_text"])
+        self.assertIn("Pack: v=1.0.0", posts[0]["markdown_text"])
         self.assertIn(f"sha256={self.pack.sha256[:12]}", posts[0]["markdown_text"])
         self.assertEqual(self.provider.requests, [])
 
