@@ -22,7 +22,7 @@ COPY requirements-live-linux-amd64.lock /requirements-live-linux-amd64.lock
 RUN python -m pip install --no-cache-dir --no-index --find-links=/wheels \
       --require-hashes --requirement /requirements-live-linux-amd64.lock \
     && python -m pip install --no-cache-dir --no-index --no-deps --find-links=/wheels \
-      'reading-pack-bot==0.4.0' \
+      'reading-pack-bot==0.4.1' \
     && rm -rf /wheels \
     && rm -f /requirements-live-linux-amd64.lock \
     && mkdir -p /var/lib/reading-pack-bot \

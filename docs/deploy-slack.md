@@ -97,8 +97,8 @@ From the repository root:
 
 ```sh
 podman build --platform linux/amd64 \
-  --tag localhost/reading-pack-bot:0.4.0 .
-podman image inspect localhost/reading-pack-bot:0.4.0 \
+  --tag localhost/reading-pack-bot:0.4.1 .
+podman image inspect localhost/reading-pack-bot:0.4.1 \
   --format '{{.Id}} {{.Digest}}'
 ```
 
@@ -132,7 +132,7 @@ Choose one model provider. For Anthropic:
 [provider]
 kind = "anthropic"
 model = "claude-sonnet-5"
-timeout_seconds = 60.0
+timeout_seconds = 90.0
 max_retries = 0
 max_output_tokens = 4096
 ```
@@ -145,9 +145,13 @@ and organization access policy have been reviewed:
 enabled = false
 max_search_uses = 8
 max_fetch_uses = 5
-max_pause_continuations = 1
+max_pause_continuations = 0
 max_content_tokens = 20000
 ```
+
+With a 90-second provider timeout, keep pause continuations disabled so one
+provider request, generation status, and the final post fit the 120-second
+service stop budget. Lower the provider timeout before enabling continuations.
 
 For OpenAI or another Chat Completions-compatible API:
 
@@ -155,7 +159,7 @@ For OpenAI or another Chat Completions-compatible API:
 [provider]
 kind = "openai-compatible"
 model = "provider-model-id"
-timeout_seconds = 60.0
+timeout_seconds = 90.0
 max_retries = 0
 max_output_tokens = 4096
 # Omit both fields for the OpenAI API.
@@ -363,7 +367,7 @@ image updates, or two active instances against one Slack installation.
 - **The answer posts but no waiting status appears:** confirm
   `show_generation_status=true`, the current Slack SDK, and `chat:write`. Status
   failure does not stop answer generation.
-- **Configuration rejects the timeouts:** keep provider timeout at 60 seconds
+- **Configuration rejects the timeouts:** keep provider timeout at 90 seconds
   or less, Slack post timeout at 10 seconds or less, provider retries at zero,
   and answers within one Slack message. Hosted-web continuations and generation
-  status must also fit the 90-second service stop budget.
+  status must also fit the 120-second service stop budget.

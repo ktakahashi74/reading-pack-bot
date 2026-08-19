@@ -17,7 +17,7 @@ from reading_pack_bot.adapters.slack import (
     split_message,
     strip_bot_mention,
 )
-from reading_pack_bot.config import AdapterConfig
+from reading_pack_bot.config import AdapterConfig, SERVICE_TIMEOUT_STOP_SECONDS
 from reading_pack_bot.errors import ConfigurationError
 from reading_pack_bot.models import BotReply
 
@@ -534,7 +534,7 @@ class SlackAdapterTests(unittest.TestCase):
             def handle(self, message, *, deliver=None, generation_started=None):
                 if generation_started is not None:
                     generation_started()
-                clock.value = 200.0
+                clock.value = 100.0 + SERVICE_TIMEOUT_STOP_SECONDS
                 raise RuntimeError("worker failed")
 
         class FailingPostClient(FakeClient):
