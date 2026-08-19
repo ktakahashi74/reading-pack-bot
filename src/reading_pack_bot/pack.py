@@ -145,9 +145,13 @@ def load_pack(
     ]
     if len(names) != 1 or not names[0]:
         raise PackValidationError("pack must contain exactly one non-empty H1 name before SYS")
-    name = names[0]
-    if any(ord(character) < 32 for character in name):
+    h1 = names[0]
+    if any(ord(character) < 32 for character in h1):
         raise PackValidationError("pack H1 name contains control characters")
+    name, separator, description = h1.rpartition(" — ")
+    if not separator:
+        name = h1
+        description = None
     if "{{" in text or "}}" in text:
         raise PackValidationError("pack contains unresolved template markers")
     raw_counts = _pairs(lines[-1], "ENDPACK")
@@ -172,6 +176,7 @@ def load_pack(
         path=candidate.resolve(strict=False),
         raw_markdown=text,
         name=name,
+        description=description,
         sha256=digest,
         header=MappingProxyType(header),
         end_counts=MappingProxyType(counts),

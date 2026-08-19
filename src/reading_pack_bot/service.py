@@ -300,21 +300,30 @@ class BotService:
                 )
             if command == "pack":
                 header = self.pack.header
+                lines = [
+                    "**Reading Pack**",
+                    f"- name: {_display_name(self.pack.name)}",
+                ]
+                if self.pack.description is not None:
+                    lines.append(
+                        f"- description: {_display_name(self.pack.description)}"
+                    )
+                lines.extend(
+                    (
+                        f"- version: {header['v']}",
+                        f"- date: {header['date']}",
+                        f"- status: {header['status']}",
+                        f"- language: {header['lang']}",
+                        f"- primary language: {header['primary']}",
+                        "- quality profile: "
+                        f"{_quality_profile_text(header['profile'])}",
+                        f"- sha256: {self.pack.sha256}",
+                    )
+                )
                 return self._reply(
                     BotReply(
                         handled=True,
-                        text=(
-                            "**Reading Pack**\n"
-                            f"- name: {_display_name(self.pack.name)}\n"
-                            f"- version: {header['v']}\n"
-                            f"- date: {header['date']}\n"
-                            f"- status: {header['status']}\n"
-                            f"- language: {header['lang']}\n"
-                            f"- primary language: {header['primary']}\n"
-                            "- quality profile: "
-                            f"{_quality_profile_text(header['profile'])}\n"
-                            f"- sha256: {self.pack.sha256}"
-                        ),
+                        text="\n".join(lines),
                     ),
                     deliver,
                 )

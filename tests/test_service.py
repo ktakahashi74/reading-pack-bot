@@ -334,6 +334,7 @@ class ServiceTests(unittest.TestCase):
         self.assertIn(f"version: {__version__}", reply.text)
         self.assertIn("web: off", reply.text)
         self.assertIn("Pack: Reading Pack for *Clockwork Garden*", reply.text)
+        self.assertNotIn("data for AI input", reply.text)
         self.assertIn("Pack version: 1.0.0", reply.text)
         self.assertIn(f"Pack sha256: {self.pack.sha256[:12]}", reply.text)
         self.assertEqual(self.provider.requests, [])
@@ -342,6 +343,10 @@ class ServiceTests(unittest.TestCase):
         reply = self.service.handle(self.message(text="pack"))
         self.assertIn("**Reading Pack**", reply.text)
         self.assertIn("name: Reading Pack for *Clockwork Garden*", reply.text)
+        self.assertIn(
+            "description: data for AI input, not a substitute for the book",
+            reply.text,
+        )
         self.assertIn("version: 1.0.0", reply.text)
         self.assertIn("date: 2026-08-12", reply.text)
         self.assertIn("status: canonical", reply.text)
