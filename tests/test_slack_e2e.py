@@ -116,6 +116,7 @@ class SlackEndToEndTests(unittest.TestCase):
         self.assertEqual(len(posts), 1)
         self.assertIn("**Usage**", posts[0]["markdown_text"])
         self.assertIn("`status`", posts[0]["markdown_text"])
+        self.assertIn("`limits`", posts[0]["markdown_text"])
         self.assertEqual(posts[0]["thread_ts"], "90.0")
         self.assertFalse(posts[0]["reply_broadcast"])
         self.assertFalse(posts[0]["link_names"])
@@ -150,6 +151,16 @@ class SlackEndToEndTests(unittest.TestCase):
         self.assertNotIn("data for AI input", posts[0]["markdown_text"])
         self.assertIn("Pack version: 1.0.0", posts[0]["markdown_text"])
         self.assertIn(f"Pack sha256: {self.pack.sha256[:12]}", posts[0]["markdown_text"])
+        self.assertEqual(self.provider.requests, [])
+
+    def test_limits_reaches_slack_without_model_call(self) -> None:
+        posts = self.send("limits", event_id="E-limits")
+        self.assertEqual(len(posts), 1)
+        self.assertIn("**Operational limits**", posts[0]["markdown_text"])
+        self.assertIn("generation timeout: 30 seconds", posts[0]["markdown_text"])
+        self.assertIn("maximum answer: 500 characters", posts[0]["markdown_text"])
+        self.assertIn("maximum question: 200 characters", posts[0]["markdown_text"])
+        self.assertNotIn("TimeoutStopSec", posts[0]["markdown_text"])
         self.assertEqual(self.provider.requests, [])
 
     def test_question_preserves_markdown_and_neutralizes_mentions(self) -> None:
@@ -205,6 +216,7 @@ class SlackEndToEndTests(unittest.TestCase):
         )
         self.send("help", event_id="E-status-help")
         self.send("status", event_id="E-status-command")
+        self.send("limits", event_id="E-limits-command")
         self.send("reset", event_id="E-status-reset")
         self.send("question", event_id="E-status-question")
         self.assertEqual(len(self.client.statuses), 1)

@@ -97,8 +97,8 @@ From the repository root:
 
 ```sh
 podman build --platform linux/amd64 \
-  --tag localhost/reading-pack-bot:0.4.1 .
-podman image inspect localhost/reading-pack-bot:0.4.1 \
+  --tag localhost/reading-pack-bot:0.4.2 .
+podman image inspect localhost/reading-pack-bot:0.4.2 \
   --format '{{.Id}} {{.Digest}}'
 ```
 
@@ -286,20 +286,23 @@ In the invited channel, check these paths in order:
 1. `@Reading Pack Bot status` returns the bot version, operating configuration,
    and the Pack name, version, and short SHA-256 without a model call.
 2. `@Reading Pack Bot help` lists the commands without a model call.
-3. A message containing introductory text followed by a new line with
+3. `@Reading Pack Bot limits` returns the generation timeout, content bounds,
+   concurrency, and web-use limits without a model call. It does not expose
+   service-manager settings or internal paths.
+4. A message containing introductory text followed by a new line with
    `@Reading Pack Bot help` also lists the commands without a model call.
-4. Introductory text followed by `@Reading Pack Bot <question>` sends the text
+5. Introductory text followed by `@Reading Pack Bot <question>` sends the text
    before the mention as labeled context and the text after it as the request.
-5. `@Reading Pack Bot pack` returns the Pack name, public metadata, and full
+6. `@Reading Pack Bot pack` returns the Pack name, public metadata, and full
    SHA-256 without a model call. It does not expose the generator's `basis`
    path.
-6. `@Reading Pack Bot context` returns the active turn count, history limit,
+7. `@Reading Pack Bot context` returns the active turn count, history limit,
    and retention period without displaying conversation content.
-7. One ordinary question receives one threaded answer.
-8. A second question in that thread uses the visible conversation context.
-9. `@Reading Pack Bot reset` removes the bot's retained context for that
+8. One ordinary question receives one threaded answer.
+9. A second question in that thread uses the visible conversation context.
+10. `@Reading Pack Bot reset` removes the bot's retained context for that
    thread.
-10. If `show_generation_status=true`, the fixed waiting status appears only
+11. If `show_generation_status=true`, the fixed waiting status appears only
    while an ordinary answer is being generated and clears after the post.
 
 Pin a notice in every enabled channel: the Pack, mention, and retained visible

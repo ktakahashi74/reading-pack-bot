@@ -30,7 +30,7 @@ jobs:
         run: |
           test ! -e build
           python -m pip wheel --no-deps --no-build-isolation . -w dist
-          sh scripts/verify-wheel.sh dist/reading_pack_bot-0.4.1-py3-none-any.whl
+          sh scripts/verify-wheel.sh dist/reading_pack_bot-0.4.2-py3-none-any.whl
       - name: Audit public boundary
         run: sh scripts/audit-public.sh
 

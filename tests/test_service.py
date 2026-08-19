@@ -357,6 +357,49 @@ class ServiceTests(unittest.TestCase):
         self.assertIn(f"sha256: {self.pack.sha256}", reply.text)
         self.assertEqual(self.provider.requests, [])
 
+    def test_limits_shows_operational_bounds_without_calling_provider(self):
+        config = self.make_config(
+            provider="anthropic",
+            model="claude-sonnet-5",
+            provider_timeout=45.0,
+            max_retries=0,
+            max_answer_characters=450,
+            max_concurrent_generations=2,
+            web_enabled=True,
+            max_web_searches=3,
+            max_web_fetches=2,
+            max_web_pause_continuations=0,
+        )
+        provider = FakeProvider()
+        service = BotService(
+            config,
+            self.pack,
+            provider,
+            MemoryStore(),
+            clock=lambda: self.now,
+        )
+
+        reply = service.handle(self.message(event="E-limits", text="limits"))
+
+        self.assertIn("**Operational limits**", reply.text)
+        self.assertIn("generation timeout: 45 seconds", reply.text)
+        self.assertIn("maximum answer: 450 characters", reply.text)
+        self.assertIn("maximum question: 200 characters", reply.text)
+        self.assertIn("concurrent generations: 2", reply.text)
+        self.assertIn("web searches: up to 3 per response", reply.text)
+        self.assertIn("web fetches: up to 2 per response", reply.text)
+        self.assertIn("continuation attempts: 0", reply.text)
+        self.assertNotIn("TimeoutStopSec", reply.text)
+        self.assertEqual(provider.requests, [])
+
+    def test_limits_reports_disabled_web_tools(self):
+        reply = self.service.handle(self.message(text="limits"))
+        self.assertIn("web tools: disabled", reply.text)
+        self.assertNotIn("web searches:", reply.text)
+        self.assertNotIn("web fetches:", reply.text)
+        self.assertNotIn("continuation attempts:", reply.text)
+        self.assertEqual(self.provider.requests, [])
+
     def test_context_shows_active_history_without_exposing_contents(self):
         empty = self.service.handle(self.message(event="E-empty", text="context"))
         self.assertIn("active history: 0 exchanges", empty.text)
@@ -399,6 +442,7 @@ class ServiceTests(unittest.TestCase):
         self.assertIn("`status`", reply.text)
         self.assertIn("`pack`", reply.text)
         self.assertIn("`context`", reply.text)
+        self.assertIn("`limits`", reply.text)
         self.assertIn("`reset`", reply.text)
         self.assertIn("`help`", reply.text)
         self.assertIn("Ask this Reading Pack", reply.text)
@@ -450,6 +494,14 @@ class ServiceTests(unittest.TestCase):
         provider = FakeProvider()
         service = BotService(config, self.pack, provider, MemoryStore(), clock=lambda: self.now)
         self.assertTrue(service.handle(self.message(event="E-help", text="help")).handled)
+        self.assertTrue(service.handle(self.message(event="E-question", text="question")).handled)
+        self.assertEqual(len(provider.requests), 1)
+
+    def test_limits_does_not_consume_model_request_budget(self):
+        config = self.make_config(daily_requests=1)
+        provider = FakeProvider()
+        service = BotService(config, self.pack, provider, MemoryStore(), clock=lambda: self.now)
+        self.assertTrue(service.handle(self.message(event="E-limits", text="limits")).handled)
         self.assertTrue(service.handle(self.message(event="E-question", text="question")).handled)
         self.assertEqual(len(provider.requests), 1)
 
