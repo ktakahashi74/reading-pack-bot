@@ -3,7 +3,7 @@ Description=Reading Pack Bot (rootless Podman)
 Documentation=https://github.com/ktakahashi74/reading-pack-bot
 
 [Container]
-Image=localhost/reading-pack-bot:0.4.1
+Image=localhost/reading-pack-bot:0.4.2
 Pull=never
 ContainerName=reading-pack-bot
 User=0

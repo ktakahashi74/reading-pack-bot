@@ -145,8 +145,8 @@ systemctl --user restart reading-pack-bot.service
 journalctl --user -u reading-pack-bot.service -n 100 --no-pager
 ```
 
-Check `@Bot help`, `@Bot status`, `@Bot pack`, `@Bot context`, one ordinary
-question, and `@Bot reset`.
+Check `@Bot help`, `@Bot status`, `@Bot limits`, `@Bot pack`, `@Bot context`,
+one ordinary question, and `@Bot reset`.
 Generated replies suppress user, role, and everyone mentions and do not expand
 links into embeds.
 
