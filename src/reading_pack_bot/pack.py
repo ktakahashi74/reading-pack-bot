@@ -138,6 +138,16 @@ def load_pack(
         raise PackValidationError("pack must contain exactly one SYS, BIB, MAP, and META section")
     if not (sections["SYS"] < sections["BIB"] < sections["MAP"] < sections["META"] < len(lines) - 1):
         raise PackValidationError("required pack sections are out of order")
+    names = [
+        line[2:].strip()
+        for line in lines[1 : sections["SYS"]]
+        if line.startswith("# ")
+    ]
+    if len(names) != 1 or not names[0]:
+        raise PackValidationError("pack must contain exactly one non-empty H1 name before SYS")
+    name = names[0]
+    if any(ord(character) < 32 for character in name):
+        raise PackValidationError("pack H1 name contains control characters")
     if "{{" in text or "}}" in text:
         raise PackValidationError("pack contains unresolved template markers")
     raw_counts = _pairs(lines[-1], "ENDPACK")
@@ -161,6 +171,7 @@ def load_pack(
     return PackSnapshot(
         path=candidate.resolve(strict=False),
         raw_markdown=text,
+        name=name,
         sha256=digest,
         header=MappingProxyType(header),
         end_counts=MappingProxyType(counts),

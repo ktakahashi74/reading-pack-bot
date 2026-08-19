@@ -39,6 +39,7 @@ WEB_RUNTIME_INSTRUCTIONS = (
 )
 
 COMMANDS = frozenset({"context", "help", "pack", "reset", "status"})
+_MAX_DISPLAY_NAME_CHARACTERS = 300
 
 
 def help_text(web_enabled: bool) -> str:
@@ -71,6 +72,12 @@ def _retention_text(seconds: int) -> str:
         if seconds % unit_seconds == 0:
             return f"{seconds // unit_seconds}{unit_name}"
     return f"{seconds}秒"
+
+
+def _display_name(name: str) -> str:
+    if len(name) <= _MAX_DISPLAY_NAME_CHARACTERS:
+        return name
+    return name[: _MAX_DISPLAY_NAME_CHARACTERS - 1] + "…"
 
 
 def generation_question(message: IncomingMessage) -> str:
@@ -264,7 +271,9 @@ class BotService:
                             f"- stage: {self.config.runtime.stage}\n"
                             f"- model: {model}\n"
                             f"- web: {web}\n"
-                            f"- Pack: v={version} sha256={self.pack.sha256[:12]}"
+                            f"- Pack: {_display_name(self.pack.name)}\n"
+                            f"- Pack version: {version}\n"
+                            f"- Pack sha256: {self.pack.sha256[:12]}"
                         ),
                     ),
                     deliver,
@@ -276,12 +285,12 @@ class BotService:
                         handled=True,
                         text=(
                             "**Reading Pack**\n"
+                            f"- name: {_display_name(self.pack.name)}\n"
                             f"- version: {header['v']}\n"
                             f"- date: {header['date']}\n"
                             f"- status: {header['status']}\n"
                             f"- language: {header['lang']} (primary: {header['primary']})\n"
                             f"- profile: {header['profile']}\n"
-                            f"- basis: {header['basis']}\n"
                             f"- sha256: {self.pack.sha256}"
                         ),
                     ),

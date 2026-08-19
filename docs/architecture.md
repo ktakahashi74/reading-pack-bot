@@ -26,8 +26,8 @@ Before constructing a provider client, the loader:
 2. reads strict UTF-8 with the required line format;
 3. computes the SHA-256 of the exact bytes and checks an optional configured
    pin;
-4. validates the `PACK` and `ENDPACK` envelopes and the required
-   `SYS`/`BIB`/`MAP`/`META` order;
+4. validates the `PACK` and `ENDPACK` envelopes, the single H1 Pack name,
+   and the required `SYS`/`BIB`/`MAP`/`META` order;
 5. reads the Pack's self-described metadata.
 
 Production accepts only `status=canonical`. A digest proves byte identity, not
